@@ -6,7 +6,7 @@ import hashlib
 
 import uuid
 
-from ssms.schemas import UserSchema, AdminSchema, ClientSchema
+from ssms.schemas import UserSchema, AdminSchema, ClientSchema, IngredientSchema
 from ssms import app
 from ssms.util.decorators import assert_base_model
 
@@ -40,21 +40,29 @@ class BaseModel(object):
         self.id = str(app.db[self.collection].insert_one(data).inserted_id)
 
         # sets a unique index on each unique field
-        unique_fields = getattr(self, 'unique', [])
-        app.db[self.collection].create_index([(field, pymongo.ASCENDING) for field in unique_fields], unique=True)
+        unique_fields = getattr(self, 'unique', None)
+        if unique_fields:
+            app.db[self.collection].create_index([(field, pymongo.ASCENDING) for field in unique_fields], unique=True)
 
         return self
 
     @classmethod
     @assert_base_model
     def query(cls, query=dict(), unique=False):
+        model_id = query.pop('id', None)
+
+        if model_id:
+            query['_id'] = ObjectId(model_id)
+
         if unique:
             result = app.db[cls.collection].find_one(query)
-            result['id'] = str(result.pop('_id'))
-            data, error = cls.schema().load(data=result)
-            if error:
-                raise Exception(error)
-            return data
+            if result:
+                result['id'] = str(result.pop('_id'))
+                data, error = cls.schema().load(data=result)
+                if error:
+                    raise Exception(error)
+                return data
+            return None
         else:
             result = app.db[cls.collection].find(query)
             result = list(map(cls.refactor_object_id_to_id, result))
@@ -87,25 +95,24 @@ class ProductCategoryRel(BaseModel):
 
 
 class Ingredient(BaseModel):
-    def __init__(self, name, type, default_unit):
-        self.name = name
-        self.type = type
-        self.default_unit = default_unit
+    schema = IngredientSchema
+    collection = 'ingredient'
+
+    def __init__(self, name, unit, id=None):
+        self.id = id
+        self.name = name.lower()
+        self.unit = unit
 
 
 class ProductIngredientRel(BaseModel):
-    def __init__(self, product, ingredient, amount, unit):
+    def __init__(self, product, ingredients, amount, unit):
         self.product = product
-        self.ingredient = ingredient
+        self.ingredients = ingredients
         self.amount = amount
         self.unit = unit
 
 
 class ProductOrderRel(BaseModel):
-    pass
-
-
-class Receipt(BaseModel):
     pass
 
 
@@ -157,6 +164,6 @@ class Client(User):
 
 
 class Order(BaseModel):
-    def __init__(self, user: User, receipt: Receipt):
+    def __init__(self, user: User):
         self.user = user
         self.receipt = receipt

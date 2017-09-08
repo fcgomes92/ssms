@@ -5,7 +5,7 @@ from decouple import config
 from pymongo import MongoClient
 
 from ssms.util.storage import SimpleBaseStore
-from ssms.resources import users
+from ssms.resources import users, ingredients
 from ssms.middleware import NonBlockingAuthentication, LoggerMiddleware
 
 import logging
@@ -29,6 +29,8 @@ def set_routes(api):
     _versions = ['v1', ]
     api.add_route(route_version(_versions[0], '/users'), users.UsersListResource())
     api.add_route(route_version(_versions[0], '/admins'), users.AdminListResource())
+    api.add_route(route_version(_versions[0], '/ingredients'), ingredients.IngredientListResource())
+    api.add_route(route_version(_versions[0], '/ingredients/{ingredient_id}'), ingredients.IngredientDetailResorce())
 
 
 def configure_logging():

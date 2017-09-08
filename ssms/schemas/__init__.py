@@ -33,3 +33,14 @@ class ClientSchema(UserSchema):
     def make_user(self, data):
         from ssms.models import Client
         return Client(**data)
+
+
+class IngredientSchema(Schema):
+    id = fields.String(allow_none=True)
+    name = fields.String(required=True)
+    unit = fields.String(required=True)
+
+    @post_load
+    def make_ingredient(self, data):
+        from ssms.models import Ingredient
+        return Ingredient(**data)

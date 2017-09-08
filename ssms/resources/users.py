@@ -37,7 +37,7 @@ class UsersListResource(object):
 
         if errors:
             errors = [
-                format_error('missin-field', ' '.join(value), dict(field=key))
+                format_error('missing-field', ' '.join(value), dict(field=key))
                 for key, value in errors.items()
             ]
             resp.status = falcon.HTTP_400
@@ -82,7 +82,7 @@ class AdminListResource(object):
 
         if errors:
             errors = [
-                format_error('missin-field', ' '.join(value), dict(field=key))
+                format_error('missing-field', ' '.join(value), dict(field=key))
                 for key, value in errors.items()
             ]
             resp.status = falcon.HTTP_400
@@ -121,7 +121,7 @@ class ClientListResource(object):
 
         if errors:
             errors = [
-                format_error('missin-field', ' '.join(value), dict(field=key))
+                format_error('missing-field', ' '.join(value), dict(field=key))
                 for key, value in errors.items()
             ]
             resp.status = falcon.HTTP_400
