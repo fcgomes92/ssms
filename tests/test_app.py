@@ -1,84 +1,75 @@
 import falcon
 from falcon import testing
 
-import io
-
-import msgpack
-
 import pytest
 
-from unittest.mock import call, MagicMock, mock_open
-
 import ssms.app
-import ssms.images
+from ssms.models import Admin
+
+import json
+
 
 @pytest.fixture
-def mock_store():
-    return MagicMock()
-
-@pytest.fixture
-def client(mock_store):
-    api = ssms.app.create_app(mock_store)
+def client():
+    api = ssms.app.create_app()
     return testing.TestClient(api)
 
 
-def test_list_images(client):
-    doc = {
-        'images': [
-            {
-                'href': '/images/1eaf6ef1-7f2d-4ecc-a8d5-6e8adba7cc0e.png'
-            }
-        ]
+@pytest.fixture(scope='module')
+def db_connection():
+    yield ssms.app.db
+    ssms.app.db.eval("db.dropDatabase()")
+
+
+@pytest.fixture(scope='module')
+def admin():
+    admin = Admin(email='admin@test.com', first_name='Admin', last_name='Admin')
+    admin.set_password('admin')
+    admin.save()
+    yield admin
+
+
+def test_users_list_resource__on_post(db_connection, client, admin):
+    mock_data = {
+        'email': 'fcgomes.92@gmail.com',
+        'first_name': 'Fernando',
+        'last_name': 'Coelho Gomes',
+        'password': 'qwe123',
+        'type': 'client'
     }
 
-    response = client.simulate_get('/images')
-    result_doc = msgpack.unpackb(response.content, encoding='utf-8')
-
-    assert result_doc == doc
-    assert response.status == falcon.HTTP_OK
-
-# "monkeypatch" is a special built-in pytest fixture that can be
-# used to install mocks.
-def test_posted_image_gets_saved(client, mock_store):
-    file_name = 'fake-image-name.xyz'
-
-    mock_store.save.return_value = file_name
-    image_content_type = 'image/xyz'
-
     response = client.simulate_post(
-        '/images',
-        body=b'some-fake-bytes',
-        headers={'content-type': image_content_type}
+        '/v1/users/',
+        body=json.dumps(mock_data)
     )
 
-    assert response.status == falcon.HTTP_CREATED
-    assert response.headers['location'] == '/images/{}'.format(file_name)
-    saver_call = mock_store.save.call_args
+    data = json.loads(response.content).get('data')
 
-    # saver_call is a unittest.mock.call tuple. It's first element is a
-    # tuple of positional arguments supplied when calling the mock.
-    assert isinstance(saver_call[0][0], falcon.request_helpers.BoundedStream)
-    assert saver_call[0][1] == image_content_type
+    data.pop('id')
+
+    mock_data.pop('password')
+
+    assert response.status == falcon.HTTP_OK
+    assert data == mock_data
 
 
-def test_saving_image(monkeypatch):
-    # This still has some mocks, but they are more localized and do not
-    # have to be monkey-patched into standard library modules (always a
-    # risky business).
-    mock_file_open = mock_open()
+def test_users_list_resource__on_get(db_connection, client, admin):
+    response = client.simulate_get('/v1/users/')
 
-    fake_uuid = '123e4567-e89b-12d3-a456-426655440000'
-    def mock_uuidgen():
-        return fake_uuid
+    data = json.loads(response.content).get('data')
 
-    fake_image_bytes = b'fake-image-bytes'
-    fake_request_stream = io.BytesIO(fake_image_bytes)
-    storage_path = 'fake-storage-path'
-    store = ssms.images.ImageStore(
-        storage_path,
-        uuidgen=mock_uuidgen,
-        fopen=mock_file_open
+    assert response.status == falcon.HTTP_OK
+    assert isinstance(data, list)
+
+
+def test_admins_list_resource__on_get(db_connection, client, admin):
+    response = client.simulate_get(
+        '/v1/admins/',
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='}
     )
 
-    assert store.save(fake_request_stream, 'image/png') == fake_uuid + '.png'
-    assert call().write(fake_image_bytes) in mock_file_open.mock_calls
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_OK
+    # assert isinstance(data, list)
+    # assert len(data) == 1
