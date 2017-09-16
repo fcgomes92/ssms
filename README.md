@@ -6,7 +6,7 @@ Aims to help a cooker manage orders and clients, and the amount of ingredients u
 
 ---
 
-Test / First User: [Ovelha Negra](fb.com/ovelhanegraveg)
+Test / First User: [Ovelha Negra](https://fb.com/ovelhanegraveg)
 
 ----
 
