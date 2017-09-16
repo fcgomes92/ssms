@@ -14,7 +14,7 @@ class NonBlockingAuthentication(object):
     def process_basic(auth):
         email, password = base64.b64decode(auth).decode().split(':')
 
-        user = User.query({'email': email}, unique=True)
+        user = User.get_by_email(email)
 
         if user:
             hashed_password, seed = User.hash_password(password, user.seed)

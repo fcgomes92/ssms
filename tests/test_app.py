@@ -1,3 +1,5 @@
+from sqlalchemy.schema import MetaData
+
 import falcon
 from falcon import testing
 
@@ -20,53 +22,29 @@ def client():
 
 
 @pytest.fixture(scope='module')
-def db_connection():
-    yield ssms.app.db
-    ssms.app.db.eval("db.dropDatabase()")
+def db_session():
+    metadata = MetaData(ssms.app.engine)
+    metadata.reflect()
+    session = ssms.app.Session()
+    yield session
+    metadata.drop_all()
 
 
 @pytest.fixture(scope='module')
 def admin():
-    admin = Admin(email='admin@test.com', first_name='Admin', last_name='Admin')
+    admin = Admin(
+        **dict(
+            email='admin@test.com',
+            first_name='Admin',
+            last_name='Admin'
+        )
+    )
     admin.set_password('admin')
     admin.save()
     yield admin
 
 
-def test_users_list_resource__on_post(db_connection, client, admin):
-    mock_data = {
-        'email': 'fcgomes.92@gmail.com',
-        'first_name': 'Fernando',
-        'last_name': 'Coelho Gomes',
-        'password': 'qwe123',
-        'type': 'client'
-    }
-
-    response = client.simulate_post(
-        '/v1/users/',
-        body=json.dumps(mock_data)
-    )
-
-    data = json.loads(response.content).get('data')
-
-    data.pop('id')
-
-    mock_data.pop('password')
-
-    assert response.status == falcon.HTTP_OK
-    assert data == mock_data
-
-
-def test_users_list_resource__on_get(db_connection, client, admin):
-    response = client.simulate_get('/v1/users/')
-
-    data = json.loads(response.content).get('data')
-
-    assert response.status == falcon.HTTP_OK
-    assert isinstance(data, list)
-
-
-def test_admins_list_resource__on_get(db_connection, client, admin):
+def test_admins_list_resource__on_get(db_session, client, admin):
     response = client.simulate_get(
         '/v1/admins/',
         headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='}
@@ -78,7 +56,7 @@ def test_admins_list_resource__on_get(db_connection, client, admin):
     assert isinstance(data, list)
 
 
-def test_ingredients_list_resource__on_post(db_connection, client, admin):
+def test_ingredients_list_resource__on_post(db_session, client, admin):
     mock_data = {
         "name": 'apple',
         "unit": 'g',
@@ -97,7 +75,7 @@ def test_ingredients_list_resource__on_post(db_connection, client, admin):
     assert data == mock_data
 
 
-def test_ingredients_list_resource__on_get(db_connection, client, admin):
+def test_ingredients_list_resource__on_get(db_session, client, admin):
     response = client.simulate_get(
         '/v1/ingredients/',
         headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='}
@@ -109,7 +87,7 @@ def test_ingredients_list_resource__on_get(db_connection, client, admin):
     assert isinstance(data, list)
 
 
-def test_ingredients_detail_resource__on_get(db_connection, client, admin):
+def test_ingredients_detail_resource__on_get(db_session, client, admin):
     mock_data = {
         "name": 'apple',
         "unit": 'g',
@@ -131,7 +109,7 @@ def test_ingredients_detail_resource__on_get(db_connection, client, admin):
     assert data == mock_data
 
 
-def test_ingredients_detail_resource__on_put(db_connection, client, admin):
+def test_ingredients_detail_resource__on_put(db_session, client, admin):
     # creates the object to be updated
     original_mock_data = {
         "name": 'apple',
@@ -157,8 +135,8 @@ def test_ingredients_detail_resource__on_put(db_connection, client, admin):
     # assert that only the name changed
     assert response.status == falcon.HTTP_200
     assert data.get('name') == mock_data.get('name')
-    assert ingredient.name != data.get('name')
-    assert ingredient.unit == data.get('unit')
+    assert data.get('name') != original_mock_data.get('name')
+    assert data.get('unit') == data.get('unit')
 
     # redefines the new ingredient
     ingredient, errors = Ingredient.schema().load(data=data)
@@ -179,5 +157,3 @@ def test_ingredients_detail_resource__on_put(db_connection, client, admin):
     # assert that only the unit changed
     assert response.status == falcon.HTTP_200
     assert data.get('unit') == mock_data.get('unit')
-    assert ingredient.name == data.get('name')
-    assert ingredient.unit != data.get('unit')

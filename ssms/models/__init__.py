@@ -1,141 +1,142 @@
-from bson.objectid import ObjectId
+from sqlalchemy.ext.declarative import declarative_base, declared_attr, AbstractConcreteBase
+from sqlalchemy.orm import subqueryload, relationship
+from sqlalchemy import Column, Integer, String, Sequence, Float, ForeignKey, func, Enum, update
 
-import pymongo
+import enum
 
 import hashlib
 
 import uuid
 
-from ssms.schemas import UserSchema, AdminSchema, ClientSchema, IngredientSchema
 from ssms import app
-from ssms.util.decorators import assert_base_model
+from ssms.schemas import (UserSchema, AdminSchema, ClientSchema, IngredientSchema, ProductSchema,
+                          ProductIngredientSchema)
 
 
-class BaseModel(object):
-    schema = None
-    collection = None
+class Base(object):
+    session = app.Session()
 
-    @staticmethod
-    def refactor_object_id_to_id(obj):
-        obj['id'] = str(obj.pop('_id'))
-        return obj
-
-    @assert_base_model
     def save(self):
-        data, errors = self.schema().dump(self)
+        if not self.id:
+            self.session.add(self)
+        else:
+            cls = self.__class__
+            self.session.query(cls) \
+                .filter(cls.id == self.id) \
+                .update(
+                {
+                    column: getattr(self, column)
+                    for column in self.__table__.columns.keys()
+                }
+            )
+        self.session.commit()
 
-        assert not errors, Exception(errors)
-
-        # updates the already created instance
-        if self.id:
-            object_id = ObjectId(data.get('id'))
-            data.pop('id')
-            return app.db[self.collection].update_one({'_id': object_id},
-                                                      {"$set": data},
-                                                      upsert=False)
-
-        data.pop('id', None)
-
-        # creates a new instance
-        self.id = str(app.db[self.collection].insert_one(data).inserted_id)
-
-        # sets a unique index on each unique field
-        unique_fields = getattr(self, 'unique', None)
-        if unique_fields:
-            app.db[self.collection].create_index([(field, pymongo.ASCENDING) for field in unique_fields], unique=True)
-
-        return self
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
 
     @classmethod
-    @assert_base_model
-    def query(cls, query=dict(), unique=False):
-        model_id = query.pop('id', None)
+    def get_all(cls):
+        return cls.session.query(cls).all()
 
-        if model_id:
-            query['_id'] = ObjectId(model_id)
-
-        if unique:
-            result = app.db[cls.collection].find_one(query)
-            if result:
-                result['id'] = str(result.pop('_id'))
-                data, error = cls.schema().load(data=result)
-                if error:
-                    raise Exception(error)
-                return data
-            return None
+    @classmethod
+    def get_by_id(cls, id):
+        if cls.id:
+            return cls.session.query(cls).filter(cls.id == id).first()
         else:
-            result = app.db[cls.collection].find(query)
-            result = list(map(cls.refactor_object_id_to_id, result))
-            data, error = cls.schema().load(data=result, many=True)
-            if error:
-                raise Exception(error)
-            return data
+            return None
 
 
-class Category(BaseModel):
-    def __init__(self, name, description, products=list()):
-        self.name = name
-        self.description = description
-        self.products = products
-
-
-class Product(BaseModel):
-    def __init__(self, name, value, discount=0, ingredients=list(), categories=list()):
-        self.name = name
-        self.value = value
-        self.discount = discount
-        self.ingredients = ingredients
-        self.categories = categories
-
-
-class ProductCategoryRel(BaseModel):
-    def __init__(self, product: Product, category: Category):
-        self.product_id = product.id
-        self.category_id = category.id
+BaseModel = declarative_base(cls=Base)
 
 
 class Ingredient(BaseModel):
     schema = IngredientSchema
     collection = 'ingredient'
 
-    def __init__(self, name, unit, id=None):
-        self.id = id
-        self.name = name.lower()
-        self.unit = unit
+    id = Column(Integer, Sequence('ingredient_id_seq'), primary_key=True, autoincrement=True)
+    name = Column(String(128))
+    unit = Column(String(128))
+
+    def __repr__(self):
+        return "<{} (name={}, unit={})>" \
+            .format(self.__class__.__name__, self.name, self.unit)
 
 
-class ProductIngredientRel(BaseModel):
-    def __init__(self, product, ingredients, amount, unit):
-        self.product = product
-        self.ingredients = ingredients
-        self.amount = amount
-        self.unit = unit
+class ProductIngredient(BaseModel):
+    schema = ProductIngredientSchema
+
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
+    amount = Column(Float)
+
+    product = relationship('Product', back_populates='ingredients')
+    ingredient = relationship('Ingredient', )
+
+    def __repr__(self):
+        return "<{}(product_id={}, ingredient_id={}, amount={:.2f})>" \
+            .format(self.__class__.__name__, self.product_id, self.ingredient_id, self.amount)
 
 
-class ProductOrderRel(BaseModel):
-    pass
+class Product(BaseModel):
+    schema = ProductSchema
+    collection = 'product'
+
+    id = Column(Integer, Sequence('product_id_seq'), primary_key=True, autoincrement=True)
+    name = Column(String)
+    value = Column(Float)
+    discount = Column(Float)
+    ingredients = relationship('ProductIngredient', back_populates='product')
+
+    def __repr__(self):
+        return "<{} (name={}, value={})>" \
+            .format(self.__class__.__name__, self.name, self.value)
 
 
-class User(BaseModel):
+class OrderProduct(Base):
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
+    amount = Column(Integer)
+
+    product = relationship('Product')
+    order = relationship('Order', back_populates='products')
+
+    def __repr__(self):
+        return "<{}(order_id={}, product_id={},amount={})>" \
+            .format(self.__class__.__name__, self.product_id, self.order_id, self.amount)
+
+
+class Order(Base):
+    id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
+    ref = Column(String(256))
+    # user = relationship('User')
+    products = relationship('OrderProduct', back_populates='order')
+
+    def __repr__(self):
+        return "<{}(id={}, ref={})>" \
+            .format(self.__class__.__name__, self.id, self.ref)
+
+
+class UsersEnum(enum.Enum):
+    admin = 0
+    client = 1
+
+
+class User(AbstractConcreteBase, BaseModel):
     schema = UserSchema
     collection = 'user'
-    unique = ('email',)
 
-    def __init__(self, email, first_name, last_name, password=None, seed=None, type='client', id=None):
-        self.id = id
-        self.email = email
-        self.first_name = first_name
-        self.last_name = last_name
-        self.password = password
-        self.seed = seed
-        self.type = type
+    id = Column(Integer, Sequence('user_id_seq'), primary_key=True, autoincrement=True)
+    email = Column(String(128), unique=True)
+    first_name = Column(String(128))
+    last_name = Column(String(128))
+    password = Column(String(256))
+    seed = Column(String(128))
+    user_type = Column(Enum(UsersEnum), default=UsersEnum.client)
 
-    def __str__(self):
-        return "{id}: {email} - {fn} {ln}".format(
-            id=self.id,
-            email=self.email,
-            fn=self.first_name,
-            ln=self.last_name)
+    def __repr__(self):
+        return "<{} (id={}, email={}, first_name={}, last_name={})>" \
+            .format(self.__class__.__name__, self.id, self.email, self.first_name, self.last_name)
 
     @staticmethod
     def hash_password(password, seed):
@@ -146,24 +147,35 @@ class User(BaseModel):
     def set_password(self, password):
         self.password, self.seed = self.hash_password(password, None)
 
+    @classmethod
+    def get_by_email(cls, email):
+        return cls.session.query(cls).filter(cls.email == email).first()
+
 
 class Admin(User):
     schema = AdminSchema
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.type = 'admin'
+    __mapper_args__ = {
+        'polymorphic_identity': 'admin',
+        'concrete': True
+    }
+
+    def save(self, *args, **kwargs):
+        self.user_type = UsersEnum.admin
+        super().save(*args, **kwargs)
 
 
 class Client(User):
     schema = ClientSchema
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.type = 'client'
+    __mapper_args__ = {
+        'polymorphic_identity': 'client',
+        'concrete': True
+    }
+
+    def save(self, *args, **kwargs):
+        self.user_type = UsersEnum.client
+        super().save(*args, **kwargs)
 
 
-class Order(BaseModel):
-    def __init__(self, user: User):
-        self.user = user
-        self.receipt = receipt
+BaseModel.metadata.create_all(app.engine)

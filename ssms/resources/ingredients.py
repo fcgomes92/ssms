@@ -15,7 +15,7 @@ def get_ingredient(req, resp, resource, params):
     if not ingredient_id:
         raise falcon.HTTPError(falcon.HTTP_400)
 
-    ingredient = Ingredient.query({'id': ingredient_id}, unique=True)
+    ingredient = Ingredient.get_by_id(ingredient_id)
 
     if not ingredient:
         raise falcon.HTTPError(falcon.HTTP_404)
@@ -67,7 +67,7 @@ class IngredientListResource(object):
     schema = Ingredient.schema()
 
     def on_get(self, req, resp, *args, **kwargs):
-        ingredients = Ingredient.query({})
+        ingredients = Ingredient.get_all()
 
         data, errors = self.schema.dump(ingredients, many=True)
 
