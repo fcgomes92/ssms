@@ -1,6 +1,6 @@
 import falcon
 
-from ssms.models import User, Admin, Client
+from ssms.models import Admin, Client
 from ssms.util.response import format_response, format_error, format_errors
 from ssms import hooks
 
@@ -54,8 +54,8 @@ class AdminListResource(object):
 
 class ClientListResource(object):
     def on_get(self, req, resp):
-        users = User.get_all()
-        data, errors = User.schema().dump(users, many=True)
+        users = Client.get_all()
+        data, errors = Client.schema().dump(users, many=True)
 
         if errors:
             logger.error(errors)
@@ -69,7 +69,7 @@ class ClientListResource(object):
     def on_post(self, req, resp):
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        user, errors = User.schema().load(data)
+        user, errors = Client.schema().load(data)
 
         if errors:
             errors = [

@@ -96,7 +96,7 @@ class LoggerMiddleware(object):
         self.logger = logger
 
     def process_request(self, req, resp, *args, **kwargs):
-        self.logger.info('[REQUEST] {0} {1} {2}'.format(req.method, req.relative_uri, resp.status[:3]))
+        self.logger.info('[REQUEST] {0} {1}'.format(req.method, req.relative_uri))
 
     def process_response(self, req, resp, *args, **kwargs):
-        self.logger.info('[RESPONSE] {0} {1}'.format(req.method, req.relative_uri))
+        self.logger.info('[RESPONSE] {0} {1} {2}'.format(req.method, req.relative_uri, resp.status[:3]))
