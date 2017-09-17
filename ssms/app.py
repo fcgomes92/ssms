@@ -25,7 +25,7 @@ def route_version(version, route):
 
 
 def set_routes(api):
-    from ssms.resources import users, ingredients, products
+    from ssms.resources import users, ingredients, products, orders
 
     _versions = ['v1', ]
     api.add_route(route_version(_versions[0], '/admins'), users.AdminListResource())
@@ -34,6 +34,8 @@ def set_routes(api):
     api.add_route(route_version(_versions[0], '/ingredients/{ingredient_id}'), ingredients.IngredientDetailResource())
     api.add_route(route_version(_versions[0], '/products'), products.ProductListResource())
     api.add_route(route_version(_versions[0], '/products/{product_id}'), products.ProductDetailResource())
+    api.add_route(route_version(_versions[0], '/orders'), orders.OrderListResource())
+    api.add_route(route_version(_versions[0], '/orders/{order_id}'), orders.OrderDetailResource())
 
 
 def configure_logging():
