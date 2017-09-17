@@ -49,7 +49,7 @@ virtualenv .env
 * On the first run or after an update you sould run:
 
 ```
-python setup.py
+python config.py
 ```
 
 * Then to start the server on 127.0.0.1:8000 run:
