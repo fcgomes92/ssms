@@ -1,8 +1,13 @@
-from marshmallow import Schema, fields, post_load, post_dump
+from marshmallow import Schema as BaseSchema, fields, post_load, post_dump
+
+
+class Schema(BaseSchema):
+    created = fields.DateTime(dump_only=True, allow_none=True, format='iso')
+    updated = fields.DateTime(dump_only=True, allow_none=True, format='iso')
 
 
 class UserSchema(Schema):
-    id = fields.String(allow_none=True)
+    id = fields.Integer(allow_none=True)
     email = fields.Email(required=True)
     password = fields.String(required=True)
     seed = fields.String(allow_none=True)
@@ -39,7 +44,7 @@ class ClientSchema(UserSchema):
 
 
 class IngredientSchema(Schema):
-    id = fields.String(allow_none=True)
+    id = fields.Integer(allow_none=True)
     name = fields.String(required=True)
     unit = fields.String(required=True)
     code = fields.String(dump_only=True, allow_none=True)
@@ -63,7 +68,7 @@ class ProductIngredientSchema(Schema):
 
 
 class ProductSchema(Schema):
-    id = fields.String(allow_none=True)
+    id = fields.Integer(allow_none=True)
     name = fields.String(required=True)
     value = fields.Float(required=True)
     discount = fields.Float()
@@ -74,3 +79,28 @@ class ProductSchema(Schema):
     def make_product(self, data):
         from ssms.models import Product
         return Product(**data)
+
+
+class OrderProductSchema(Schema):
+    product_id = fields.Integer(allow_none=True)
+    order_id = fields.Integer(allow_none=True)
+    product = fields.Nested(ProductSchema)
+    amount = fields.Float(default=0)
+
+    @post_load
+    def make_order_product(self, data):
+        from ssms.models import OrderProduct
+        return OrderProduct(**data)
+
+
+class OrderSchema(Schema):
+    id = fields.Integer(allow_none=True)
+    client_id = fields.Integer()
+    client = fields.Nested(ClientSchema, dump_only=True, allow_none=True)
+    products = fields.Nested(ProductSchema, default=[], many=True)
+    code = fields.String(dump_only=True, allow_none=True)
+
+    @post_load
+    def make_order(self, data):
+        from ssms.models import Order
+        return Order(**data)

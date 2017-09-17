@@ -1,7 +1,7 @@
 from sqlalchemy.schema import MetaData
 
 import ssms.app
-from ssms.models import ProductIngredient, Product, Ingredient, Admin, UsersEnum, Client
+from ssms.models import ProductIngredient, Product, Ingredient, Admin, UsersEnum, Client, Order, OrderProduct
 
 import pytest
 
@@ -154,7 +154,6 @@ def test_ingredient_model(db_session, logger):
     logger.info(all_ingredients)
 
     for idx, ingredient in enumerate(all_ingredients):
-        logger.info(ingredient.code)
         assert mock_ingredient_data[idx].get('name') == ingredient.name
         assert mock_ingredient_data[idx].get('unit') == ingredient.unit
 
@@ -197,3 +196,37 @@ def test_product_model(db_session, logger):
         assert mock_product_data[idx].get('value') == product.value
         assert mock_product_data[idx].get('discount') == product.discount
         assert mock_product_data[idx].get('ingredients') == product.ingredients
+
+
+def test_order_model(db_session, logger):
+    products = Product.get_all()
+    clients = Client.get_all()
+
+    mock_order_data = [
+        {
+            "client_id": clients[0].id,
+            "products": [
+                OrderProduct(**dict(amount=2, product_id=products[0].id)),
+                OrderProduct(**dict(amount=2, product_id=products[1].id)),
+            ]
+        },
+        {
+            "client_id": clients[0].id,
+            "products": [
+                OrderProduct(**dict(amount=5, product_id=products[0].id)),
+                OrderProduct(**dict(amount=5, product_id=products[1].id)),
+            ]
+        }
+    ]
+
+    for order_data in mock_order_data:
+        o = Order(**order_data)
+        o.save()
+
+    all_orders = Order.get_all()
+
+    logger.info(all_orders)
+
+    for idx, order in enumerate(all_orders):
+        assert len(order.products) == 2
+        assert mock_order_data[idx].get('client_id') == order.client_id

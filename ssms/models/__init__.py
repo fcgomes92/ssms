@@ -1,6 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base, declared_attr, AbstractConcreteBase
-from sqlalchemy.orm import subqueryload, relationship
-from sqlalchemy import Column, Integer, String, Sequence, Float, ForeignKey, func, Enum, update
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Sequence, Float, ForeignKey, Enum, DateTime
 
 import enum
 
@@ -8,17 +8,23 @@ import hashlib
 
 import uuid
 
+from datetime import datetime
+
 from ssms import app
 from ssms.util import friendly_code
 from ssms.schemas import (UserSchema, AdminSchema, ClientSchema, IngredientSchema, ProductSchema,
-                          ProductIngredientSchema)
+                          ProductIngredientSchema, OrderSchema, OrderProductSchema)
 
 
 class Base(object):
     session = app.Session()
 
+    created = Column(DateTime)
+    updated = Column(DateTime)
+
     def save(self):
         if not self.id:
+            self.created = datetime.utcnow()
             self.session.add(self)
         else:
             cls = self.__class__
@@ -30,13 +36,13 @@ class Base(object):
                     for column in self.__table__.columns.keys()
                 }
             )
+        self.updated = datetime.utcnow()
         self.session.commit()
 
         if 'code' in self.__table__.columns.keys():
             if not self.code:
                 self.code = friendly_code.encode(int(self.id))
                 self.session.commit()
-
 
     @declared_attr
     def __tablename__(cls):
@@ -59,7 +65,6 @@ BaseModel = declarative_base(cls=Base)
 
 class Ingredient(BaseModel):
     schema = IngredientSchema
-    collection = 'ingredient'
 
     id = Column(Integer, Sequence('ingredient_id_seq'), primary_key=True, autoincrement=True)
     name = Column(String(128))
@@ -88,7 +93,6 @@ class ProductIngredient(BaseModel):
 
 class Product(BaseModel):
     schema = ProductSchema
-    collection = 'product'
 
     id = Column(Integer, Sequence('product_id_seq'), primary_key=True, autoincrement=True)
     name = Column(String)
@@ -102,31 +106,6 @@ class Product(BaseModel):
             .format(self.__class__.__name__, self.name, self.value)
 
 
-class OrderProduct(Base):
-    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
-    order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
-    amount = Column(Integer)
-
-    product = relationship('Product')
-    order = relationship('Order', back_populates='products')
-
-    def __repr__(self):
-        return "<{}(order_id={}, product_id={},amount={})>" \
-            .format(self.__class__.__name__, self.product_id, self.order_id, self.amount)
-
-
-class Order(Base):
-    id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
-    ref = Column(String(256))
-    code = Column(String(256), index=True, unique=True)
-    # user = relationship('User')
-    products = relationship('OrderProduct', back_populates='order')
-
-    def __repr__(self):
-        return "<{}(id={}, ref={})>" \
-            .format(self.__class__.__name__, self.id, self.ref)
-
-
 class UsersEnum(enum.Enum):
     admin = 0
     client = 1
@@ -134,7 +113,6 @@ class UsersEnum(enum.Enum):
 
 class User(AbstractConcreteBase, BaseModel):
     schema = UserSchema
-    collection = 'user'
 
     id = Column(Integer, Sequence('user_id_seq'), primary_key=True, autoincrement=True)
     email = Column(String(128), unique=True)
@@ -179,6 +157,8 @@ class Admin(User):
 class Client(User):
     schema = ClientSchema
 
+    orders = relationship('Order', back_populates='client')
+
     __mapper_args__ = {
         'polymorphic_identity': 'client',
         'concrete': True
@@ -187,6 +167,37 @@ class Client(User):
     def save(self, *args, **kwargs):
         self.user_type = UsersEnum.client
         super().save(*args, **kwargs)
+
+
+class OrderProduct(BaseModel):
+    schema = OrderProductSchema
+
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
+    amount = Column(Integer)
+
+    product = relationship('Product')
+    order = relationship('Order', back_populates='products')
+
+    def __repr__(self):
+        return "<{}(order_id={}, product_id={},amount={})>" \
+            .format(self.__class__.__name__, self.product_id, self.order_id, self.amount)
+
+
+class Order(BaseModel):
+    schema = OrderSchema
+
+    id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
+    code = Column(String(256), index=True, unique=True)
+
+    products = relationship('OrderProduct', back_populates='order')
+
+    client_id = Column(Integer, ForeignKey('client.id'))
+    client = relationship('Client', back_populates='orders')
+
+    def __repr__(self):
+        return "<{}(id={}, code={}, client_id={})>" \
+            .format(self.__class__.__name__, self.id, self.code, self.client_id)
 
 
 BaseModel.metadata.create_all(app.engine)
