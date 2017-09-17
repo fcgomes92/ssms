@@ -49,6 +49,8 @@ class IngredientSchema(Schema):
 
 
 class ProductIngredientSchema(Schema):
+    ingredient_id = fields.Integer()
+    product_id = fields.Integer()
     ingredient = fields.Nested(IngredientSchema)
     amount = fields.Float(default=0)
 

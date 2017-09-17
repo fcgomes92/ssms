@@ -24,7 +24,7 @@ def get_ingredient(req, resp, resource, params):
 
 
 @falcon.before(get_ingredient)
-class IngredientDetailResorce(object):
+class IngredientDetailResource(object):
     schema = Ingredient.schema()
 
     def on_get(self, res, resp, ingredient, *args, **kwargs):
