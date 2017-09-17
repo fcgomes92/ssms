@@ -71,6 +71,8 @@ def test_ingredients_list_resource__on_post(db_session, client, admin):
     data = json.loads(response.content).get('data')
     data.pop('id')
     data.pop("code")
+    data.pop('created', None)
+    data.pop('updated', None)
 
     assert response.status == falcon.HTTP_OK
     assert data == mock_data
@@ -106,6 +108,8 @@ def test_ingredients_detail_resource__on_get(db_session, client, admin):
 
     data.pop('id', None)
     data.pop('code', None)
+    data.pop('created', None)
+    data.pop('updated', None)
 
     assert response.status == falcon.HTTP_200
     assert data == mock_data
