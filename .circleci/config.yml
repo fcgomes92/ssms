@@ -24,12 +24,12 @@ jobs:
           command: |
               python3 -m venv .env
               .env/bin/pip install -r requirements.txt
-      - run: ./venv/bin/python config.py
+      - run: ./.env/bin/python config.py
       - run:
           command: |
-            ./venv/bin/pytest
+            ./.env/bin/pytest
             DATABASE_URI=sqlite:///:memory: DEBUG=True pytest tests/test_models.py
       - run:
           command: |
-            ./venv/bin/pytest
+            ./.env/bin/pytest
             DATABASE_URI=sqlite:///:memory: DEBUG=True pytest tests/test_app.py
