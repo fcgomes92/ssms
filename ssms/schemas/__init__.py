@@ -9,6 +9,7 @@ class UserSchema(Schema):
     first_name = fields.String(required=True)
     user_type = fields.String(allow_none=True)
     last_name = fields.String(required=True)
+    code = fields.String(dump_only=True, allow_none=True)
 
     @post_load
     def make_user(self, data):
@@ -41,6 +42,7 @@ class IngredientSchema(Schema):
     id = fields.String(allow_none=True)
     name = fields.String(required=True)
     unit = fields.String(required=True)
+    code = fields.String(dump_only=True, allow_none=True)
 
     @post_load
     def make_ingredient(self, data):
@@ -66,6 +68,7 @@ class ProductSchema(Schema):
     value = fields.Float(required=True)
     discount = fields.Float()
     ingredients = fields.Nested(ProductIngredientSchema, default=[], many=True)
+    code = fields.String(dump_only=True, allow_none=True)
 
     @post_load
     def make_product(self, data):

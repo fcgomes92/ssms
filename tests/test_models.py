@@ -154,6 +154,7 @@ def test_ingredient_model(db_session, logger):
     logger.info(all_ingredients)
 
     for idx, ingredient in enumerate(all_ingredients):
+        logger.info(ingredient.code)
         assert mock_ingredient_data[idx].get('name') == ingredient.name
         assert mock_ingredient_data[idx].get('unit') == ingredient.unit
 

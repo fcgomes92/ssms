@@ -9,6 +9,7 @@ import hashlib
 import uuid
 
 from ssms import app
+from ssms.util import friendly_code
 from ssms.schemas import (UserSchema, AdminSchema, ClientSchema, IngredientSchema, ProductSchema,
                           ProductIngredientSchema)
 
@@ -30,6 +31,12 @@ class Base(object):
                 }
             )
         self.session.commit()
+
+        if 'code' in self.__table__.columns.keys():
+            if not self.code:
+                self.code = friendly_code.encode(int(self.id))
+                self.session.commit()
+
 
     @declared_attr
     def __tablename__(cls):
@@ -57,6 +64,7 @@ class Ingredient(BaseModel):
     id = Column(Integer, Sequence('ingredient_id_seq'), primary_key=True, autoincrement=True)
     name = Column(String(128))
     unit = Column(String(128))
+    code = Column(String(256), index=True, unique=True)
 
     def __repr__(self):
         return "<{} (name={}, unit={})>" \
@@ -87,6 +95,7 @@ class Product(BaseModel):
     value = Column(Float)
     discount = Column(Float)
     ingredients = relationship('ProductIngredient', back_populates='product')
+    code = Column(String(256), index=True, unique=True)
 
     def __repr__(self):
         return "<{} (name={}, value={})>" \
@@ -109,6 +118,7 @@ class OrderProduct(Base):
 class Order(Base):
     id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
     ref = Column(String(256))
+    code = Column(String(256), index=True, unique=True)
     # user = relationship('User')
     products = relationship('OrderProduct', back_populates='order')
 
@@ -133,6 +143,7 @@ class User(AbstractConcreteBase, BaseModel):
     password = Column(String(256))
     seed = Column(String(128))
     user_type = Column(Enum(UsersEnum), default=UsersEnum.client)
+    code = Column(String(256), index=True, unique=True)
 
     def __repr__(self):
         return "<{} (id={}, email={}, first_name={}, last_name={})>" \
