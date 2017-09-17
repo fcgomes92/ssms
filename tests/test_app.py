@@ -6,7 +6,7 @@ from falcon import testing
 import pytest
 
 import ssms.app
-from ssms.models import Admin, Ingredient, Product, ProductIngredient
+from ssms.models import Admin, Ingredient, Product, ProductIngredient, Client
 
 import json
 
@@ -298,3 +298,118 @@ def test_products_detail_resource__on_put(db_session, client, admin):
 
     for pi in data.get('ingredients'):
         assert pi.get('amount') == 100
+
+
+def test_clients_list_resource__on_post(db_session, client, admin):
+    mock_data = {
+        "email": "client_post@test.com",
+        "first_name": "Client Post",
+        "last_name": "Client Post",
+        "password": "qwe123"
+    }
+
+    response = client.simulate_post(
+        '/v1/clients/',
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+    data.pop('id', None)
+    data.pop("code", None)
+    data.pop('created', None)
+    data.pop('updated', None)
+
+    assert response.status == falcon.HTTP_OK
+    # assert data == mock_data
+
+
+def test_clients_list_resource__on_get(db_session, client, admin):
+    response = client.simulate_get(
+        '/v1/clients/',
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='}
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_OK
+    assert isinstance(data, list)
+
+
+def test_clients_detail_resource__on_get(db_session, client, admin):
+    mock_data = {
+        "email": "client_get@test.com",
+        "first_name": "Client Get",
+        "last_name": "Client Get",
+        "password": "qwe123"
+    }
+
+    user_client = Client(**mock_data)
+    user_client.save()
+
+    response = client.simulate_get(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    data.pop('id', None)
+    data.pop('code', None)
+    data.pop('created', None)
+    data.pop('updated', None)
+
+    assert response.status == falcon.HTTP_200
+    # assert data == mock_data
+
+
+def test_clients_detail_resource__on_put(db_session, client, admin):
+    # creates the object to be updated
+    original_mock_data = {
+        "email": "client_put@test.com",
+        "first_name": "Client Put",
+        "last_name": "Client Put",
+        "password": "qwe123"
+    }
+
+    # saves the object to be updated instance
+    user_client = Client(**original_mock_data)
+    user_client.save()
+
+    # the data to be updated
+    mock_data = {"first_name": "Client Put Updated", }
+
+    # creates the request
+    response = client.simulate_put(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    # assert that only the name changed
+    assert response.status == falcon.HTTP_200
+    assert data.get('first_name') == mock_data.get('first_name')
+    assert data.get('first_name') != original_mock_data.get('first_name')
+
+    # redefines the new client
+    user_client, errors = Client.schema().load(data=data)
+
+    # new mock to be updated
+    mock_data = {"last_name": "Client Put Updated", }
+
+    # creates a new request to update only the client unit
+    response = client.simulate_put(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+    data.pop('id', None)
+
+    # assert that only the unit changed
+    assert response.status == falcon.HTTP_200
+    assert data.get('last_name') == mock_data.get('last_name')
+    assert data.get('last_name') != original_mock_data.get('last_name')
