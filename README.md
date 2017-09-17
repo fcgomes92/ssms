@@ -1,5 +1,9 @@
 # Simples Storage Management System
 
+[![CircleCI](https://circleci.com/gh/fcgomes92/ssms.svg?style=svg)](https://circleci.com/gh/fcgomes92/ssms)
+
+---
+
 A Simple Storage Management System focused on managing orders from small restaurants / cookers.
 
 Aims to help a cooker manage orders and clients, and the amount of ingredients used in one or more orders.
