@@ -1,8 +1,9 @@
 # Simples Storage Management System
 
-[![CircleCI](https://circleci.com/gh/fcgomes92/ssms.svg?style=svg)](https://circleci.com/gh/fcgomes92/ssms)
-
----
+[![CircleCI](https://img.shields.io/circleci/project/github/RedSparr0w/node-csgo-parser.svg)](https://circleci.com/gh/fcgomes92/ssms)
+[![Github All Releases](https://img.shields.io/github/downloads/fcgomes92/ssms/total.svg)](https://github.com/fcgomes92/ssms)
+[![GitHub tag](https://img.shields.io/github/tag/fcgomes92/ssms.svg)](https://github.com/fcgomes92/ssms/tags) 
+[![GitHub release](https://img.shields.io/github/release/fcgomes92/ssms.svg)](https://github.com/fcgomes92/ssms/releases)  
 
 A Simple Storage Management System focused on managing orders from small restaurants / cookers.
 
