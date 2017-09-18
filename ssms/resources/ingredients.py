@@ -25,10 +25,11 @@ def get_ingredient(req, resp, resource, params):
 
 @falcon.before(get_ingredient)
 class IngredientDetailResource(object):
-    schema = Ingredient.schema()
+    schema = Ingredient.schema
 
     def on_get(self, res, resp, ingredient, *args, **kwargs):
-        data, errors = self.schema.dump(ingredient)
+        schema = self.schema()
+        data, errors = schema.dump(ingredient)
 
         if errors:
             logger.error(errors)
@@ -40,12 +41,13 @@ class IngredientDetailResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_put(self, req, resp, ingredient, *args, **kwargs):
+        schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        ingredient, errors = self.schema.dump(ingredient)
+        ingredient, errors = schema.dump(ingredient)
         ingredient.update(data)
 
-        ingredient, errors = self.schema.load(ingredient)
+        ingredient, errors = schema.load(ingredient)
 
         if errors:
             errors = [
@@ -57,19 +59,20 @@ class IngredientDetailResource(object):
         else:
             ingredient.save()
 
-            data, errors = self.schema.dump(ingredient)
+            data, errors = schema.dump(ingredient)
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
 
 class IngredientListResource(object):
-    schema = Ingredient.schema()
+    schema = Ingredient.schema
 
     def on_get(self, req, resp, *args, **kwargs):
+        schema = self.schema()
         ingredients = Ingredient.get_all()
 
-        data, errors = self.schema.dump(ingredients, many=True)
+        data, errors = schema.dump(ingredients, many=True)
 
         if errors:
             logger.error(errors)
@@ -81,11 +84,12 @@ class IngredientListResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_post(self, req, resp, *args, **kwargs):
+        schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
         data.pop('type', None)
 
-        ingredient, errors = self.schema.load(data)
+        ingredient, errors = schema.load(data)
 
         if errors:
             errors = [
@@ -97,7 +101,7 @@ class IngredientListResource(object):
         else:
             ingredient.save()
 
-            data, errors = self.schema.dump(ingredient)
+            data, errors = schema.dump(ingredient)
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)

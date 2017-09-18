@@ -25,10 +25,11 @@ def get_product(req, resp, resource, params):
 
 @falcon.before(get_product)
 class ProductDetailResource(object):
-    schema = Product.schema()
+    schema = Product.schema
 
     def on_get(self, res, resp, product, *args, **kwargs):
-        data, errors = self.schema.dump(product)
+        schema = self.schema()
+        data, errors = schema.dump(product)
 
         if errors:
             logger.error(errors)
@@ -40,12 +41,13 @@ class ProductDetailResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_put(self, req, resp, product, *args, **kwargs):
+        schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        product, errors = self.schema.dump(product)
+        product, errors = schema.dump(product)
         product.update(data)
 
-        product, errors = self.schema.load(product)
+        product, errors = schema.load(product)
 
         if errors:
             errors = [
@@ -57,19 +59,20 @@ class ProductDetailResource(object):
         else:
             product.save()
 
-            data, errors = self.schema.dump(product)
+            data, errors = schema.dump(product)
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
 
 class ProductListResource(object):
-    schema = Product.schema()
+    schema = Product.schema
 
     def on_get(self, req, resp, *args, **kwargs):
+        schema = self.schema()
         products = Product.get_all()
 
-        data, errors = self.schema.dump(products, many=True)
+        data, errors = schema.dump(products, many=True)
 
         if errors:
             logger.error(errors)
@@ -81,11 +84,12 @@ class ProductListResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_post(self, req, resp, *args, **kwargs):
+        schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
         data.pop('type', None)
 
-        product, errors = self.schema.load(data)
+        product, errors = schema.load(data)
 
         if errors:
             errors = [
@@ -97,7 +101,7 @@ class ProductListResource(object):
         else:
             product.save()
 
-            data, errors = self.schema.dump(product)
+            data, errors = schema.dump(product)
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)

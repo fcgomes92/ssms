@@ -374,6 +374,7 @@ def test_clients_detail_resource__on_put(db_session, client, admin):
 
     # saves the object to be updated instance
     user_client = Client(**original_mock_data)
+    user_client.set_password(original_mock_data.get('password'))
     user_client.save()
 
     # the data to be updated
@@ -393,9 +394,6 @@ def test_clients_detail_resource__on_put(db_session, client, admin):
     assert data.get('first_name') == mock_data.get('first_name')
     assert data.get('first_name') != original_mock_data.get('first_name')
 
-    # redefines the new client
-    user_client, errors = Client.schema().load(data=data)
-
     # new mock to be updated
     mock_data = {"last_name": "Client Put Updated", }
 
@@ -413,3 +411,36 @@ def test_clients_detail_resource__on_put(db_session, client, admin):
     assert response.status == falcon.HTTP_200
     assert data.get('last_name') == mock_data.get('last_name')
     assert data.get('last_name') != original_mock_data.get('last_name')
+
+
+def test_clients_detail_resource__on_delete(db_session, client, admin):
+    # creates the object to be updated
+    original_mock_data = {
+        "email": "client_delete@test.com",
+        "first_name": "Client Delete",
+        "last_name": "Client Delete",
+        "password": "qwe123"
+    }
+
+    # saves the object to be updated instance
+    user_client = Client(**original_mock_data)
+    user_client.set_password(original_mock_data.get('password'))
+    user_client.save()
+
+    user_client_db = db_session.query(Client).filter(Client.email == original_mock_data.get('email')).first()
+
+    assert user_client_db is not None
+
+    # creates the request
+    response = client.simulate_delete(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    logger.info(data)
+
+    user_client_db = db_session.query(Client).filter(Client.email == original_mock_data.get('email')).first()
+
+    assert user_client_db is None

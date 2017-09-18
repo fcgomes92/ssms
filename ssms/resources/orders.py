@@ -25,10 +25,11 @@ def get_order(req, resp, resource, params):
 
 @falcon.before(get_order)
 class OrderDetailResource(object):
-    schema = Order.schema()
+    schema = Order.schema
 
     def on_get(self, res, resp, order, *args, **kwargs):
-        data, errors = self.schema.dump(order)
+        schema = self.schema()
+        data, errors = schema.dump(order)
 
         if errors:
             logger.error(errors)
@@ -40,12 +41,13 @@ class OrderDetailResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_put(self, req, resp, order, *args, **kwargs):
+        schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        order, errors = self.schema.dump(order)
+        order, errors = schema.dump(order)
         order.update(data)
 
-        order, errors = self.schema.load(order)
+        order, errors = schema.load(order)
 
         if errors:
             errors = [
@@ -57,19 +59,20 @@ class OrderDetailResource(object):
         else:
             order.save()
 
-            data, errors = self.schema.dump(order)
+            data, errors = schema.dump(order)
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
 
 class OrderListResource(object):
-    schema = Order.schema()
+    schema = Order.schema
 
     def on_get(self, req, resp, *args, **kwargs):
+        schema = self.schema()
         orders = Order.get_all()
 
-        data, errors = self.schema.dump(orders, many=True)
+        data, errors = schema.dump(orders, many=True)
 
         if errors:
             logger.error(errors)
@@ -81,11 +84,12 @@ class OrderListResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_post(self, req, resp, *args, **kwargs):
+        schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
         data.pop('type', None)
 
-        order, errors = self.schema.load(data)
+        order, errors = schema.load(data)
 
         if errors:
             errors = [
@@ -97,7 +101,7 @@ class OrderListResource(object):
         else:
             order.save()
 
-            data, errors = self.schema.dump(order)
+            data, errors = schema.dump(order)
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)

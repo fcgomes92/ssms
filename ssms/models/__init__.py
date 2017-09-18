@@ -44,6 +44,10 @@ class Base(object):
                 self.code = friendly_code.encode(int(self.id))
                 self.session.commit()
 
+    def delete(self):
+        self.session.delete(self)
+        self.session.commit()
+
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
