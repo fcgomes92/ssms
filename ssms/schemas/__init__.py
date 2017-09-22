@@ -58,7 +58,7 @@ class IngredientSchema(Schema):
 class ProductIngredientSchema(Schema):
     ingredient_id = fields.Integer()
     product_id = fields.Integer()
-    ingredient = fields.Nested(IngredientSchema)
+    ingredient = fields.Nested(IngredientSchema, allow_none=True)
     amount = fields.Float(default=0)
 
     @post_load
@@ -84,7 +84,7 @@ class ProductSchema(Schema):
 class OrderProductSchema(Schema):
     product_id = fields.Integer(allow_none=True)
     order_id = fields.Integer(allow_none=True)
-    product = fields.Nested(ProductSchema)
+    product = fields.Nested(ProductSchema, allow_none=True)
     amount = fields.Float(default=0)
 
     @post_load
@@ -97,7 +97,7 @@ class OrderSchema(Schema):
     id = fields.Integer(allow_none=True)
     client_id = fields.Integer()
     client = fields.Nested(ClientSchema, dump_only=True, allow_none=True)
-    products = fields.Nested(ProductSchema, default=[], many=True)
+    products = fields.Nested(OrderProductSchema, default=[], many=True)
     code = fields.String(dump_only=True, allow_none=True)
 
     @post_load

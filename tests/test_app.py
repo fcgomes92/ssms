@@ -6,7 +6,7 @@ from falcon import testing
 import pytest
 
 import ssms.app
-from ssms.models import Admin, Ingredient, Product, ProductIngredient, Client
+from ssms.models import Admin, Ingredient, Product, ProductIngredient, Client, Order, OrderProduct
 
 import json
 
@@ -113,6 +113,27 @@ def test_ingredients_detail_resource__on_get(db_session, client, admin):
 
     assert response.status == falcon.HTTP_200
     assert data == mock_data
+
+
+def test_ingredients_detail_resource__on_delete(db_session, client, admin):
+    mock_data = {
+        "name": 'apple to delete',
+        "unit": 'g',
+    }
+
+    ingredient = Ingredient(**mock_data)
+    ingredient.save()
+
+    response = client.simulate_delete(
+        '/v1/ingredients/{ingredient_id}'.format(ingredient_id=ingredient.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert Ingredient.get_by_id(data.get('id')) is None
+    assert ingredient not in db_session
 
 
 def test_ingredients_detail_resource__on_put(db_session, client, admin):
@@ -238,6 +259,34 @@ def test_products_detail_resource__on_get(db_session, client, admin):
 
     for pi in data.get('ingredients'):
         assert pi.get('amount') == 100
+
+
+def test_products_detail_resource__on_delete(db_session, client):
+    mock_data = {
+        "name": "Delete Cake",
+        "value": 10.0,
+        "discount": 0,
+        "ingredients": [
+            ProductIngredient(**{"amount": 100, "ingredient_id": 1}),
+            ProductIngredient(**{"amount": 100, "ingredient_id": 2}),
+        ]
+    }
+
+    product = Product(**mock_data)
+    product.save()
+
+    response = client.simulate_delete(
+        '/v1/products/{product_id}'.format(product_id=product.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert Product.get_by_id(data.get('id')) is None
+    assert len(db_session.query(ProductIngredient).filter(Product.id == data.get('id')).all()) == 0
+    assert len(Ingredient.get_all()) > 0
+    assert product not in db_session
 
 
 def test_products_detail_resource__on_put(db_session, client, admin):
@@ -444,3 +493,160 @@ def test_clients_detail_resource__on_delete(db_session, client, admin):
     user_client_db = db_session.query(Client).filter(Client.email == original_mock_data.get('email')).first()
 
     assert user_client_db is None
+
+
+def test_orders_list_resource__on_post(db_session, client):
+    user = Client.get_all()[0]
+    products = Product.get_all()
+
+    mock_data = {
+        "client_id": user.id,
+        "products": [
+            {"amount": 2, "product_id": products[0].id, },
+            {"amount": 2, "product_id": products[1].id, },
+        ]
+    }
+
+    response = client.simulate_post(
+        '/v1/orders/',
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    logger.debug(data)
+
+    data.pop('id', None)
+    data.pop("code", None)
+    data.pop('created', None)
+    data.pop('updated', None)
+
+    assert response.status == falcon.HTTP_OK
+    assert len(Order.get_all()) == 1
+    assert data.get('client').get('id') == user.id
+
+
+def test_orders_list_resource__on_get(db_session, client, admin):
+    response = client.simulate_get(
+        '/v1/orders/',
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='}
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_OK
+    assert isinstance(data, list)
+
+
+def test_orders_detail_resource__on_get(db_session, client, admin):
+    user = Client.get_all()[0]
+    products = Product.get_all()
+
+    mock_data = {
+        "client_id": user.id,
+        "products": [
+            OrderProduct(**{"amount": 2, "product_id": products[0].id, }),
+            OrderProduct(**{"amount": 2, "product_id": products[1].id, }),
+        ]
+    }
+
+    order = Order(**mock_data)
+    order.save()
+
+    response = client.simulate_get(
+        '/v1/orders/{order_id}'.format(order_id=order.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert data.get('client_id') == mock_data.get('client_id')
+    assert len(data.get('products')) == 2
+
+
+def test_orders_detail_resource__on_put(db_session, client, admin):
+    # creates the object to be updated
+    user = Client.get_all()[0]
+    products = Product.get_all()
+
+    original_mock_data = {
+        "client_id": user.id,
+        "products": [
+            OrderProduct(**{"amount": 2, "product_id": products[0].id, }),
+            OrderProduct(**{"amount": 2, "product_id": products[1].id, }),
+        ]
+    }
+    # saves the object to be updated instance
+    order = Order(**original_mock_data)
+    order.save()
+
+    # the data to be updated
+    mock_data = {"products": [
+        {"amount": 1, "product_id": products[0].id, },
+    ]}
+
+    # creates the request
+    response = client.simulate_put(
+        '/v1/orders/{order_id}'.format(order_id=order.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    # assert that only the name changed
+    assert response.status == falcon.HTTP_200
+    assert len(data.get('products')) == 1
+    assert data.get('products')[0].get('amount') == 1
+
+    # new mock to be updated
+    mock_data = {"products": [
+        {"amount": 10, "product_id": products[0].id, },
+    ]}
+
+    # creates a new request to update only the client unit
+    response = client.simulate_put(
+        '/v1/orders/{order_id}'.format(order_id=order.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    # assert that only the unit changed
+    assert response.status == falcon.HTTP_200
+    assert len(data.get('products')) == 1
+    assert data.get('products')[0].get('amount') == 10
+
+
+def test_orders_detail_resource__on_delete(db_session, client, admin):
+    # creates the object to be updated
+    user = Client.get_all()[0]
+    products = Product.get_all()
+
+    original_mock_data = {
+        "client_id": user.id,
+        "products": [
+            OrderProduct(**{"amount": 2, "product_id": products[0].id, }),
+            OrderProduct(**{"amount": 2, "product_id": products[1].id, }),
+        ]
+    }
+
+    order = Order(**original_mock_data)
+    order.save()
+
+    # creates the request
+    response = client.simulate_delete(
+        '/v1/orders/{client_id}'.format(client_id=order.id),
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert Order.get_by_id(data.get('id')) is None
+    assert len(db_session.query(OrderProduct).filter(Order.id == data.get('id')).all()) == 0
+    assert len(Ingredient.get_all()) > 0
+    assert order not in db_session

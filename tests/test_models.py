@@ -230,3 +230,28 @@ def test_order_model(db_session, logger):
     for idx, order in enumerate(all_orders):
         assert len(order.products) == 2
         assert mock_order_data[idx].get('client_id') == order.client_id
+
+
+def test_cient_model_delete(db_session, logger):
+    clients = Client.get_all()
+
+
+def test_admin_model_delete(db_session, logger):
+    admins = Admin.get_all()
+
+
+def test_ingredient_model_delete(db_session, logger):
+    ingredients = Ingredient.get_all()
+
+
+def test_product_model_delete(db_session, logger):
+    products = Product.get_all()
+
+
+def test_order_model_delete(db_session, logger):
+    orders = Order.get_all()
+
+    for order in orders:
+        order.delete()
+
+    assert len(Order.get_all()) == 0

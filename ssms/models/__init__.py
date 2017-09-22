@@ -75,6 +75,10 @@ class Ingredient(BaseModel):
     unit = Column(String(128))
     code = Column(String(256), index=True, unique=True)
 
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
+
     def __repr__(self):
         return "<{} (name={}, unit={})>" \
             .format(self.__class__.__name__, self.name, self.unit)
@@ -87,8 +91,12 @@ class ProductIngredient(BaseModel):
     ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
     amount = Column(Float)
 
-    product = relationship('Product', back_populates='ingredients')
-    ingredient = relationship('Ingredient', )
+    product = relationship('Product', back_populates='ingredients', cascade="all, delete-orphan", single_parent=True)
+    ingredient = relationship('Ingredient', cascade="all, delete-orphan", single_parent=True)
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
 
     def __repr__(self):
         return "<{}(product_id={}, ingredient_id={}, amount={:.2f})>" \
@@ -102,8 +110,12 @@ class Product(BaseModel):
     name = Column(String)
     value = Column(Float)
     discount = Column(Float)
-    ingredients = relationship('ProductIngredient', back_populates='product')
+    ingredients = relationship('ProductIngredient', back_populates='product', cascade="all, delete-orphan")
     code = Column(String(256), index=True, unique=True)
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
 
     def __repr__(self):
         return "<{} (name={}, value={})>" \
@@ -126,6 +138,10 @@ class User(AbstractConcreteBase, BaseModel):
     seed = Column(String(128))
     user_type = Column(Enum(UsersEnum), default=UsersEnum.client)
     code = Column(String(256), index=True, unique=True)
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
 
     def __repr__(self):
         return "<{} (id={}, email={}, first_name={}, last_name={})>" \
@@ -150,7 +166,7 @@ class Admin(User):
 
     __mapper_args__ = {
         'polymorphic_identity': 'admin',
-        'concrete': True
+        'concrete': True,
     }
 
     def save(self, *args, **kwargs):
@@ -161,7 +177,7 @@ class Admin(User):
 class Client(User):
     schema = ClientSchema
 
-    orders = relationship('Order', back_populates='client')
+    orders = relationship('Order', back_populates='client', cascade="all, delete-orphan")
 
     __mapper_args__ = {
         'polymorphic_identity': 'client',
@@ -180,8 +196,12 @@ class OrderProduct(BaseModel):
     order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
     amount = Column(Integer)
 
-    product = relationship('Product')
-    order = relationship('Order', back_populates='products')
+    product = relationship('Product', cascade="all, delete-orphan", single_parent=True)
+    order = relationship('Order', back_populates='products', cascade="all, delete-orphan", single_parent=True)
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
 
     def __repr__(self):
         return "<{}(order_id={}, product_id={},amount={})>" \
@@ -194,10 +214,14 @@ class Order(BaseModel):
     id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
     code = Column(String(256), index=True, unique=True)
 
-    products = relationship('OrderProduct', back_populates='order')
+    products = relationship('OrderProduct', back_populates='order', cascade="all, delete-orphan")
 
     client_id = Column(Integer, ForeignKey('client.id'))
-    client = relationship('Client', back_populates='orders')
+    client = relationship('Client', back_populates='orders', cascade="all, delete-orphan", single_parent=True)
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
 
     def __repr__(self):
         return "<{}(id={}, code={}, client_id={})>" \

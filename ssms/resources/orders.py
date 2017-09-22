@@ -64,6 +64,17 @@ class OrderDetailResource(object):
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
+    def on_delete(self, req, resp, order, *args, **kwargs):
+        schema = self.schema()
+
+        order.delete()
+
+        data, errors = schema.dump(order)
+
+        resp.status = falcon.HTTP_200
+
+        resp.body = json.dumps(format_response(data), ensure_ascii=False)
+
 
 class OrderListResource(object):
     schema = Order.schema
@@ -92,6 +103,7 @@ class OrderListResource(object):
         order, errors = schema.load(data)
 
         if errors:
+            logger.error(errors)
             errors = [
                 format_error('missing-field', ' '.join(value), dict(field=key))
                 for key, value in errors.items()

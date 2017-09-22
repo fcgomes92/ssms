@@ -40,7 +40,7 @@ def set_routes(api):
 
 
 def configure_logging():
-    _default_logging_format = '[%(asctime)s][%(name)s]: %(message)s'
+    _default_logging_format = '[%(levelname)s][%(asctime)s][%(name)s]: %(message)s'
     if DEBUG:
         logging.basicConfig(level=config('LOGGING_LEVEL', cast=int, default=logging.ERROR),
                             filename='./logging.log',

@@ -1,14 +1,19 @@
-format_response = lambda response: {
-    "data": response,
-}
+def format_response(response):
+    return {
+        "data": response,
+    }
 
-format_error = lambda code, message, extra: dict(
-    code=code,
-    message=message,
-    **extra
-)
 
-format_errors = lambda errors: dict(
-    error=True,
-    errors=[error for error in errors]
-)
+def format_error(code, message, extra):
+    return dict(
+        code=code,
+        message=message,
+        **extra
+    )
+
+
+def format_errors(errors):
+    return dict(
+        error=True,
+        errors=[error for error in errors]
+    )

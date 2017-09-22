@@ -50,6 +50,7 @@ class ProductDetailResource(object):
         product, errors = schema.load(product)
 
         if errors:
+            logger.error(errors)
             errors = [
                 format_error('missing-field', ' '.join(value), dict(field=key))
                 for key, value in errors.items()
@@ -63,6 +64,17 @@ class ProductDetailResource(object):
 
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
+
+    def on_delete(self, req, resp, product, *args, **kwargs):
+        schema = self.schema()
+
+        product.delete()
+
+        data, errors = schema.dump(product)
+
+        resp.status = falcon.HTTP_200
+
+        resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
 
 class ProductListResource(object):

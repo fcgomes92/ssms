@@ -64,6 +64,17 @@ class IngredientDetailResource(object):
             resp.status = falcon.HTTP_200
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
+    def on_delete(self, req, resp, ingredient, *args, **kwargs):
+        schema = self.schema()
+
+        ingredient.delete()
+
+        data, errors = schema.dump(ingredient)
+
+        resp.status = falcon.HTTP_200
+
+        resp.body = json.dumps(format_response(data), ensure_ascii=False)
+
 
 class IngredientListResource(object):
     schema = Ingredient.schema
