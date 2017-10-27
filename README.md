@@ -85,3 +85,11 @@ pip install -r requirements.txt
 ```
 gunicorn --reload 'ssms.app:create_app()'
 ```
+
+---
+
+To run tests you should run:
+
+```
+DATABASE_URI=sqlite:///:memory: pytest tests/test_app.py
+```

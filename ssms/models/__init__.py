@@ -63,6 +63,13 @@ class Base(object):
         else:
             return None
 
+    @classmethod
+    def get_by_code(cls, code):
+        if getattr(cls, 'code', None):
+            return cls.session.query(cls).filter(cls.code == code).first()
+        else:
+            return None
+
 
 BaseModel = declarative_base(cls=Base)
 
@@ -159,6 +166,10 @@ class User(AbstractConcreteBase, BaseModel):
     @classmethod
     def get_by_email(cls, email):
         return cls.session.query(cls).filter(cls.email == email).first()
+
+    def get_token(self):
+        from ssms.util.auth import encode
+        return encode(dict(code=self.code, email=self.email)).decode()
 
 
 class Admin(User):

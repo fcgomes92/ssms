@@ -2,13 +2,29 @@ import falcon
 
 import base64
 
+import jwt
+
 from ssms.models import User
 
 
 class NonBlockingAuthentication(object):
     @staticmethod
     def process_token(token):
-        return None, token
+        from ssms.util.auth import decode
+        try:
+            user_data = decode(token)
+        except jwt.ExpiredSignatureError:
+            raise falcon.HTTPError(falcon.HTTP_401, title='Expired Token')
+        except jwt.DecodeError:
+            raise falcon.HTTPError(falcon.HTTP_401, title='Reading token error')
+        except Exception:
+            raise falcon.HTTPError(falcon.HTTP_403, title='Token error')
+        else:
+            user = User.get_by_email(user_data.get('email'))
+            if user:
+                return user, token
+            else:
+                raise falcon.HTTPError(falcon.HTTP_404)
 
     @staticmethod
     def process_basic(auth):
@@ -30,16 +46,21 @@ class NonBlockingAuthentication(object):
         if not auth:
             return None, None
 
+        # check the auth type (basic|token)
         try:
             _type, _auth_string = auth.split(' ')
         except ValueError:
             raise falcon.HTTPError(falcon.HTTP_401)
         else:
+            # the basic auth to get a token
             if _type.lower() == 'basic':
-                return self.process_basic(_auth_string.encode())
+                user, token = self.process_basic(_auth_string.encode())
+                return user, token, 'basic'
 
+            # the token auth to handle all other auths and refresh token ones too
             if _type.lower() == 'token':
-                return self.process_token(_auth_string.encode())
+                user, token = self.process_token(_auth_string.encode())
+                return user, token, 'token'
 
             raise falcon.HTTPError(falcon.HTTP_401)
 
@@ -72,9 +93,10 @@ class NonBlockingAuthentication(object):
                 that will be passed to the resource's responder
                 method as keyword arguments.
         """
-        user, token = self.process_auth(req.auth)
+        user, token, auth_type = self.process_auth(req.auth)
         setattr(req, 'user', user)
         setattr(req, 'token', token)
+        setattr(req, 'auth_type', auth_type)
 
     def process_response(self, req, resp, resource, req_succeeded, *args, **kwargs):
         """Post-processing of the response (after routing).

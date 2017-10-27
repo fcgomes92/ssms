@@ -44,6 +44,23 @@ def admin():
     yield admin
 
 
+def test_users_auth__on_post(db_session, client, admin):
+    response = client.simulate_post(
+        '/v1/users/auth/',
+        headers={'Authorization': 'Basic YWRtaW5AdGVzdC5jb206YWRtaW4='}
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_OK
+
+    response = client.simulate_post(
+        '/v1/users/auth/',
+        headers={'Authorization': 'Token {}'.format(data)}
+    )
+    assert response.status == falcon.HTTP_OK
+
+
 def test_admins_list_resource__on_get(db_session, client, admin):
     response = client.simulate_get(
         '/v1/admins/',
