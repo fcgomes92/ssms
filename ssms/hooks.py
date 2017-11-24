@@ -19,3 +19,8 @@ def require_token_auth(req, resp, resource, params):
 def require_admin(req, resp, resource, params):
     if req.user.user_type != UsersEnum.admin:
         raise falcon.HTTPError(falcon.HTTP_403)
+
+
+def require_user(req, resp, resource, params):
+    if not req.user:
+        raise falcon.HTTPError(falcon.HTTP_403)

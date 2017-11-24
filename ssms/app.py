@@ -32,6 +32,7 @@ def set_routes(api):
     from ssms.resources import users, ingredients, products, orders, auth
 
     _versions = ['v1', ]
+    api.add_route(route_version(_versions[0], '/users'), users.UsersListResource())
     api.add_route(route_version(_versions[0], '/users/auth'), auth.UserAuthenticationResource())
     api.add_route(route_version(_versions[0], '/admins'), users.AdminListResource())
     api.add_route(route_version(_versions[0], '/clients'), users.ClientListResource())

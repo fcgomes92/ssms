@@ -10,9 +10,8 @@ from ssms.models import User
 class NonBlockingAuthentication(object):
     @staticmethod
     def process_token(token):
-        from ssms.util.auth import decode
         try:
-            user_data = decode(token)
+            user = User.get_by_token(token)
         except jwt.ExpiredSignatureError:
             raise falcon.HTTPError(falcon.HTTP_401, title='Expired Token')
         except jwt.DecodeError:
@@ -20,7 +19,6 @@ class NonBlockingAuthentication(object):
         except Exception:
             raise falcon.HTTPError(falcon.HTTP_403, title='Token error')
         else:
-            user = User.get_by_email(user_data.get('email'))
             if user:
                 return user, token
             else:
@@ -44,7 +42,7 @@ class NonBlockingAuthentication(object):
 
     def process_auth(self, auth):
         if not auth:
-            return None, None
+            return None, None, None
 
         # check the auth type (basic|token)
         try:

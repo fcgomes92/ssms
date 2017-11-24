@@ -60,6 +60,28 @@ def test_users_auth__on_post(db_session, client, admin):
     )
     assert response.status == falcon.HTTP_OK
 
+    # a request invalid token should return 401
+    response = client.simulate_get(
+        '/v1/users',
+        headers={'Authorization': 'Token ABCD'}
+    )
+
+    assert response.status == falcon.HTTP_401
+
+    # a request with no token should return 403
+    response = client.simulate_get(
+        '/v1/users',
+    )
+
+    assert response.status == falcon.HTTP_403
+
+    response = client.simulate_get(
+        '/v1/users',
+        headers={'Authorization': 'Token {}'.format(data)}
+    )
+
+    assert response.status == falcon.HTTP_OK
+
 
 def test_admins_list_resource__on_get(db_session, client, admin):
     response = client.simulate_get(

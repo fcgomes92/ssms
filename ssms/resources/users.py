@@ -1,6 +1,6 @@
 import falcon
 
-from ssms.models import Admin, Client
+from ssms.models import Admin, Client, User
 from ssms.util.response import format_response, format_error, format_errors
 from ssms import hooks
 
@@ -115,7 +115,7 @@ class ClientListResource(object):
 class ClientDetailResource(object):
     schema = Client.schema
 
-    def on_get(self, res, resp, client, *args, **kwargs):
+    def on_get(self, req, resp, client, *args, **kwargs):
         schema = self.schema()
         schema.context['remove_fields'] = ['seed', 'password']
 
@@ -168,3 +168,24 @@ class ClientDetailResource(object):
         resp.status = falcon.HTTP_200
 
         resp.body = json.dumps(format_response(data), ensure_ascii=False)
+
+
+@falcon.before(hooks.require_user)
+class UsersListResource(object):
+    schema = User.schema
+
+    def on_get(self, req, resp, *args, **kwargs):
+        user = req.user
+        schema = self.schema()
+        schema.context['remove_fields'] = ['seed', 'password']
+
+        data, errors = schema.dump(user)
+
+        if errors:
+            logger.error(errors)
+            raise falcon.HTTPInternalServerError()
+
+        data = format_response(data)
+
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps(data, ensure_ascii=False)

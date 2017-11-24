@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 
 from ssms import app
-from ssms.util import friendly_code
+from ssms.util import friendly_code, auth
 from ssms.schemas import (UserSchema, AdminSchema, ClientSchema, IngredientSchema, ProductSchema,
                           ProductIngredientSchema, OrderSchema, OrderProductSchema)
 
@@ -166,6 +166,11 @@ class User(AbstractConcreteBase, BaseModel):
     @classmethod
     def get_by_email(cls, email):
         return cls.session.query(cls).filter(cls.email == email).first()
+
+    @classmethod
+    def get_by_token(cls, token):
+        data = auth.decode(token)
+        return cls.get_by_email(data.get('email'))
 
     def get_token(self):
         from ssms.util.auth import encode
