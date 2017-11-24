@@ -1,59 +1,11 @@
-from sqlalchemy.schema import MetaData
-
-import ssms.app
 from ssms.models import ProductIngredient, Product, Ingredient, Admin, UsersEnum, Client, Order, OrderProduct
 
-import pytest
-
-import logging
-
-
-@pytest.fixture(scope='module')
-def logger():
-    _default_logging_format = '[%(asctime)s][%(name)s]: %(message)s'
-    logging.basicConfig(level=logging.DEBUG,
-                        filename='./logging.log',
-                        filemode='w',
-                        format=_default_logging_format)
-    logger = logging.getLogger(__name__)
-    yield logger
-
-
-@pytest.fixture(scope='module')
-def db_session():
-    metadata = MetaData(ssms.app.engine)
-    metadata.reflect()
-    session = ssms.app.Session()
-    yield session
-    metadata.drop_all()
+from tests import util, conftest
 
 
 def test_admin_model(db_session, logger):
     users_data = [
-        {
-            'email': 'fcgomes.92@gmail.com',
-            'first_name': 'Fernando',
-            'last_name': 'Coelho Gomes',
-            'password': 'qwe123',
-        },
-        {
-            'email': 'john@travolta.com',
-            'first_name': 'John',
-            'last_name': 'Travolta',
-            'password': 'qwe123',
-        },
-        {
-            'email': 'bruce@willis.net',
-            'first_name': 'Bruce',
-            'last_name': 'Willis',
-            'password': 'qwe123',
-        },
-        {
-            'email': 'sofia@turner.com',
-            'first_name': 'Sofia',
-            'last_name': 'Turner',
-            'password': 'qwe123',
-        }
+        util.get_random_user_data() for idx in range(8)
     ]
 
     for user_data in users_data:
@@ -72,18 +24,21 @@ def test_admin_model(db_session, logger):
 
 
 def test_admin_model__get_by_email(db_session, logger):
-    emails = [
-        'fcgomes.92@gmail.com',
-        'john@travolta.com',
-        'bruce@willis.net',
-        'sofia@turner.com',
+    users_data = [
+        util.get_random_user_data() for idx in range(8)
     ]
 
-    for email in emails:
-        admin = Admin.get_by_email(email)
+    for user_data in users_data:
+        user = Admin(**user_data)
+        user.set_password(user.password)
+        user.save()
+        logger.info(user)
+
+    for user_data in users_data:
+        admin = Admin.get_by_email(user_data.get('email'))
 
         assert admin is not None
-        assert admin.email == email
+        assert admin.email == user_data.get('email')
 
 
 def test_client_model(db_session, logger):
