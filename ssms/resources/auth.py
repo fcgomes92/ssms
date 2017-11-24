@@ -17,4 +17,3 @@ class UserAuthenticationResource(object):
 
         resp.status = falcon.HTTP_200
         resp.body = json.dumps(format_response(user.get_token()), ensure_ascii=False)
-

@@ -11,6 +11,29 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
+@falcon.before(hooks.require_auth)
+@falcon.before(hooks.require_user)
+class UsersListResource(object):
+    schema = User.schema
+
+    def on_get(self, req, resp, *args, **kwargs):
+        user = req.user
+        schema = self.schema()
+        schema.context['remove_fields'] = ['seed', 'password']
+
+        data, errors = schema.dump(user)
+
+        if errors:
+            logger.error(errors)
+            raise falcon.HTTPInternalServerError()
+
+        data = format_response(data)
+
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps(data, ensure_ascii=False)
+
+
+@falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_admin)
 class AdminListResource(object):
     schema = Admin.schema
@@ -55,19 +78,7 @@ class AdminListResource(object):
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
 
-def get_client(req, resp, resource, params):
-    client_id = params.get('client_id', None)
-    if not client_id:
-        raise falcon.HTTPError(falcon.HTTP_400)
-
-    client = Client.get_by_id(client_id)
-
-    if not client:
-        raise falcon.HTTPError(falcon.HTTP_404)
-
-    params['client'] = client
-
-
+@falcon.before(hooks.require_auth)
 class ClientListResource(object):
     schema = Client.schema
 
@@ -111,7 +122,8 @@ class ClientListResource(object):
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
 
-@falcon.before(get_client)
+@falcon.before(hooks.require_auth)
+@falcon.before(hooks.get_client)
 class ClientDetailResource(object):
     schema = Client.schema
 
@@ -168,24 +180,3 @@ class ClientDetailResource(object):
         resp.status = falcon.HTTP_200
 
         resp.body = json.dumps(format_response(data), ensure_ascii=False)
-
-
-@falcon.before(hooks.require_user)
-class UsersListResource(object):
-    schema = User.schema
-
-    def on_get(self, req, resp, *args, **kwargs):
-        user = req.user
-        schema = self.schema()
-        schema.context['remove_fields'] = ['seed', 'password']
-
-        data, errors = schema.dump(user)
-
-        if errors:
-            logger.error(errors)
-            raise falcon.HTTPInternalServerError()
-
-        data = format_response(data)
-
-        resp.status = falcon.HTTP_200
-        resp.body = json.dumps(data, ensure_ascii=False)
