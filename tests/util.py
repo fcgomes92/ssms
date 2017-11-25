@@ -1,7 +1,48 @@
+from ssms.models import ProductIngredient, OrderProduct, Ingredient, Client, Product, Admin, Order
+
+import random
+
 import mimesis
 
 provider = mimesis.Generic()
 provider.add_provider(mimesis.Personal)
+provider.add_provider(mimesis.Food)
+provider.add_provider(mimesis.Numbers)
+
+
+def get_random_ingredients(amount):
+    ingredients = Ingredient.get_all()
+    return random.sample(ingredients, amount)
+
+
+def get_random_ingredient():
+    ingredients = Ingredient.get_all()
+    return random.choice(ingredients)
+
+
+def get_random_products(amount):
+    products = Product.get_all()
+    return random.sample(products, amount)
+
+
+def get_random_product():
+    products = Product.get_all()
+    return random.choice(products)
+
+
+def get_random_order():
+    orders = Order.get_all()
+    return random.choice(orders)
+
+
+def get_random_client():
+    clients = Client.get_all()
+    return random.choice(clients)
+
+
+def get_random_admin():
+    admins = Admin.get_all()
+    return random.choice(admins)
 
 
 def get_random_user_data():
@@ -10,4 +51,32 @@ def get_random_user_data():
         'first_name': provider.personal.name(),
         'last_name': provider.personal.surname(),
         'password': provider.personal.password(),
+    }
+
+
+def get_random_ingredient_data():
+    return {
+        "name": provider.food.fruit(),
+        "unit": 'g',
+    }
+
+
+def get_random_product_data():
+    return {
+        "name": provider.food.dish(),
+        "value": provider.numbers.between(1.0, 30.0),
+        "discount": 0.0,
+        "ingredients": [
+            ProductIngredient(**dict(amount=100, ingredient_id=ingredient.id))
+            for ingredient in get_random_ingredients(2)
+        ],
+    }
+
+
+def get_random_order_data():
+    return {
+        "client_id": get_random_client().id,
+        "products": [
+            OrderProduct(**dict(amount=2, product_id=product.id)) for product in get_random_products(2)
+        ]
     }

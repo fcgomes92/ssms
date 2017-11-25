@@ -11,13 +11,12 @@ from ssms.models import Admin
 
 
 @pytest.fixture(scope='module')
-def logger():
+def conf_logger():
     _default_logging_format = '[%(asctime)s][%(name)s]: %(message)s'
     logging.basicConfig(level=logging.DEBUG,
                         filename='./logging.log',
                         filemode='w',
                         format=_default_logging_format)
-    yield logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
