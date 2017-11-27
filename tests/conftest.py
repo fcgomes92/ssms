@@ -6,8 +6,10 @@ from falcon import testing
 
 import pytest
 
+from base64 import b64encode
+
 import ssms.app
-from ssms.models import Admin
+from ssms.models import Admin, Client
 
 
 @pytest.fixture(scope='module')
@@ -45,13 +47,29 @@ def db_session():
 
 @pytest.fixture(scope='module')
 def admin():
-    admin = Admin(
-        **dict(
-            email='admin@test.com',
-            first_name='Admin',
-            last_name='Admin'
-        )
-    )
+    admin = Admin(**dict(
+        email='admin@test.com',
+        first_name='Admin',
+        last_name='Admin'
+    ))
     admin.set_password('admin')
     admin.save()
+
+    setattr(admin, 'basic_password', b64encode("{}:{}".format(admin.email, 'admin').encode()).decode("ascii"))
+
     yield admin
+
+
+@pytest.fixture(scope='module')
+def user_client():
+    client = Client(**dict(
+        email='client@test.com',
+        first_name='Client',
+        last_name='Client'
+    ))
+    client.set_password('admin')
+    client.save()
+
+    setattr(client, 'basic_password', b64encode("{}:{}".format(client.email, 'admin').encode()).decode("ascii"))
+
+    yield client

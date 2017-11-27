@@ -1,6 +1,6 @@
 from collections import Counter
 
-from ssms.models import Product, Ingredient, Admin, UsersEnum, Client, Order
+from ssms.models import Product, Ingredient, Admin, UsersEnum, Client, Order, ProductIngredient
 
 from tests import util, conftest
 
@@ -82,20 +82,19 @@ def test_ingredient_model(db_session, conf_logger):
 
 
 def test_product_model(db_session, conf_logger):
+    amount_of_ingredients = 4
     mock_product_data = [
-        util.get_random_product_data() for idx in range(8)
+        util.get_random_product_data_model(amount_of_ingredients) for idx in range(8)
     ]
 
-    for product_data in mock_product_data:
-        p = Product(**product_data)
+    for pd in mock_product_data:
+        p = Product(**pd)
         p.save()
 
     all_products = Product.get_all()
 
-    logger.info(all_products)
-
     for idx, product in enumerate(all_products):
-        assert len(product.ingredients) == 2
+        assert len(product.ingredients) == amount_of_ingredients
         assert mock_product_data[idx].get('name') == product.name
         assert mock_product_data[idx].get('value') == product.value
         assert mock_product_data[idx].get('discount') == product.discount
@@ -103,8 +102,9 @@ def test_product_model(db_session, conf_logger):
 
 
 def test_order_model(db_session, conf_logger):
+    amount_of_products = 2
     mock_order_data = [
-        util.get_random_order_data() for idx in range(8)
+        util.get_random_order_data_model(2) for idx in range(8)
     ]
 
     for order_data in mock_order_data:
@@ -116,12 +116,12 @@ def test_order_model(db_session, conf_logger):
     logger.info(all_orders)
 
     for idx, order in enumerate(all_orders):
-        assert len(order.products) == 2
+        assert len(order.products) == amount_of_products
         assert mock_order_data[idx].get('client_id') == order.client_id
         assert Counter(mock_order_data[idx].get('products')) == Counter(order.products)
 
 
-def test_cient_model_delete(db_session, conf_logger):
+def test_client_model_delete(db_session, conf_logger):
     clients = Client.get_all()
     client = util.get_random_client()
     client.delete()
@@ -160,7 +160,6 @@ def test_product_model_delete(db_session, conf_logger):
     product = util.get_random_product()
 
     logger.info("DELETED PRODUCT: {}".format(product))
-
     product.delete()
 
     assert product in products

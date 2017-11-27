@@ -1,7 +1,7 @@
 import falcon
 
 from ssms import hooks
-from ssms.models import Product
+from ssms.models import Product, ProductIngredient
 from ssms.util.response import format_errors, format_error, format_response
 
 import json
@@ -78,10 +78,15 @@ class ProductDetailResource(object):
         schema = self.schema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        product, errors = schema.dump(product)
-        product.update(data)
+        ingredients = data.pop('ingredients', None)
 
-        product, errors = schema.load(product)
+        product, errors = schema.load(data, partial=True, instance=product)
+
+        pi_errors = None
+        pi = None
+        if ingredients:
+            pi_schema = ProductIngredient.schema()
+            pi, pi_errors = pi_schema.load(ingredients, many=True, partial=True)
 
         if errors:
             logger.error(errors)
@@ -91,7 +96,18 @@ class ProductDetailResource(object):
             ]
             resp.status = falcon.HTTP_400
             resp.body = json.dumps(format_errors(errors), ensure_ascii=False)
+        elif pi_errors:
+            logger.error(pi_errors)
+            pi_errors = [
+                format_error('missing-field', ' '.join(value), dict(field=key))
+                for key, value in pi_errors.items()
+            ]
+            resp.status = falcon.HTTP_400
+            resp.body = json.dumps(format_errors(pi_errors), ensure_ascii=False)
         else:
+            if pi:
+                product.ingredients = pi
+
             product.save()
 
             data, errors = schema.dump(product)

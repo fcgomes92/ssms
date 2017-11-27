@@ -1,8 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base, declared_attr, AbstractConcreteBase
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Column, Integer, String, Sequence, Float, ForeignKey, Enum, DateTime
-
-import enum
 
 import hashlib
 
@@ -11,6 +9,7 @@ import uuid
 from datetime import datetime
 
 from ssms import app
+from ssms.models.enums import UsersEnum
 from ssms.util import friendly_code, auth
 from ssms.schemas import (UserSchema, AdminSchema, ClientSchema, IngredientSchema, ProductSchema,
                           ProductIngredientSchema, OrderSchema, OrderProductSchema)
@@ -23,7 +22,7 @@ class Base(object):
     updated = Column(DateTime)
 
     def save(self):
-        if not self.id:
+        if not getattr(self, 'id', None):
             self.created = datetime.utcnow()
             self.session.add(self)
         else:
@@ -91,25 +90,6 @@ class Ingredient(BaseModel):
             .format(self.__class__.__name__, self.name, self.unit)
 
 
-class ProductIngredient(BaseModel):
-    schema = ProductIngredientSchema
-
-    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
-    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
-    amount = Column(Float)
-
-    product = relationship('Product', back_populates='ingredients', cascade="all, delete-orphan", single_parent=True)
-    ingredient = relationship('Ingredient', cascade="all, delete-orphan", single_parent=True)
-
-    __mapper_args__ = {
-        'confirm_deleted_rows': False,
-    }
-
-    def __repr__(self):
-        return "<{}(product_id={}, ingredient_id={}, amount={:.2f})>" \
-            .format(self.__class__.__name__, self.product_id, self.ingredient_id, self.amount)
-
-
 class Product(BaseModel):
     schema = ProductSchema
 
@@ -117,7 +97,6 @@ class Product(BaseModel):
     name = Column(String)
     value = Column(Float)
     discount = Column(Float)
-    ingredients = relationship('ProductIngredient', back_populates='product', cascade="all, delete-orphan")
     code = Column(String(256), index=True, unique=True)
 
     __mapper_args__ = {
@@ -129,9 +108,111 @@ class Product(BaseModel):
             .format(self.__class__.__name__, self.name, self.value)
 
 
-class UsersEnum(enum.Enum):
-    admin = 0
-    client = 1
+class Order(BaseModel):
+    schema = OrderSchema
+
+    id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
+    code = Column(String(256), index=True, unique=True)
+
+    client_id = Column(Integer, ForeignKey('client.id'))
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
+
+    def __repr__(self):
+        return "<{}(id={}, code={}, client_id={})>" \
+            .format(self.__class__.__name__, self.id, self.code, self.client_id)
+
+
+class ProductIngredient(BaseModel):
+    schema = ProductIngredientSchema
+
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    ingredient_id = Column(Integer, ForeignKey('ingredient.id'), primary_key=True)
+    amount = Column(Float)
+
+    product = relationship('Product',
+                           lazy="subquery",
+                           cascade='save-update, merge, expunge',
+                           backref=backref('ingredients',
+                                           lazy="subquery",
+                                           cascade="all, delete-orphan",
+                                           single_parent=True))
+    ingredient = relationship('Ingredient',
+                              lazy="subquery",
+                              cascade='save-update, merge, expunge',
+                              backref=backref('products',
+                                              lazy="subquery",
+                                              cascade="all, delete-orphan",
+                                              single_parent=True))
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
+
+    @classmethod
+    def get_by_product_id(cls, product_id):
+        return list(cls.session.query(cls).filter(cls.product_id == product_id))
+
+    @classmethod
+    def get_by_ingredient_id(cls, ingredient_id):
+        return list(cls.session.query(cls).filter(cls.ingredient_id == ingredient_id))
+
+    @classmethod
+    def get_by_product_ingredient(cls, product_id, ingredient_id):
+        # return cls.session.query(cls).filter(cls.code == code).first()
+        return cls.session.query(cls).filter(cls.product_id == product_id) \
+            .filter(cls.ingredient_id == ingredient_id).first()
+
+    def __repr__(self):
+        return "<{}(product_id={}, ingredient_id={}, amount={:.2f})>" \
+            .format(self.__class__.__name__, self.product_id, self.ingredient_id, self.amount)
+
+
+class OrderProduct(BaseModel):
+    schema = OrderProductSchema
+
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
+    amount = Column(Integer)
+
+    product = relationship('Product',
+                           lazy="subquery",
+                           cascade='save-update, merge, expunge',
+                           backref=backref('orders',
+                                           lazy="subquery",
+                                           cascade="all, delete-orphan",
+                                           single_parent=True))
+    order = relationship('Order',
+                         lazy="subquery",
+                         cascade='save-update, merge, expunge',
+                         backref=backref('products',
+                                         lazy="subquery",
+                                         cascade="all, delete-orphan",
+                                         single_parent=True))
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False,
+    }
+
+    @classmethod
+    def get_by_product_id(cls, product_id):
+        return list(cls.session.query(cls).filter(cls.product_id == product_id))
+
+    @classmethod
+    def get_by_order_id(cls, order_id):
+        return list(cls.session.query(cls).filter(cls.order_id == order_id))
+
+    @classmethod
+    def get_by_product_order(cls, product_id, order_id):
+        # return cls.session.query(cls).filter(cls.code == code).first()
+        return cls.session.query(cls).filter(cls.product_id == product_id) \
+            .filter(cls.order_id == order_id).first()
+
+    def __repr__(self):
+        return "<{}(order_id={}, product_id={},amount={})>" \
+            .format(self.__class__.__name__, self.order_id, self.product_id, self.amount)
 
 
 class User(AbstractConcreteBase, BaseModel):
@@ -193,7 +274,10 @@ class Admin(User):
 class Client(User):
     schema = ClientSchema
 
-    orders = relationship('Order', back_populates='client', cascade="all, delete-orphan")
+    orders = relationship('Order',
+                          backref=backref('client', lazy="subquery"),
+                          cascade="all, delete-orphan",
+                          lazy="subquery")
 
     __mapper_args__ = {
         'polymorphic_identity': 'client',
@@ -203,45 +287,6 @@ class Client(User):
     def save(self, *args, **kwargs):
         self.user_type = UsersEnum.client
         super().save(*args, **kwargs)
-
-
-class OrderProduct(BaseModel):
-    schema = OrderProductSchema
-
-    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
-    order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
-    amount = Column(Integer)
-
-    product = relationship('Product', cascade="all, delete-orphan", single_parent=True)
-    order = relationship('Order', back_populates='products', cascade="all, delete-orphan", single_parent=True)
-
-    __mapper_args__ = {
-        'confirm_deleted_rows': False,
-    }
-
-    def __repr__(self):
-        return "<{}(order_id={}, product_id={},amount={})>" \
-            .format(self.__class__.__name__, self.product_id, self.order_id, self.amount)
-
-
-class Order(BaseModel):
-    schema = OrderSchema
-
-    id = Column(Integer, Sequence('orders_id_seq'), primary_key=True, autoincrement=True)
-    code = Column(String(256), index=True, unique=True)
-
-    products = relationship('OrderProduct', back_populates='order', cascade="all, delete-orphan")
-
-    client_id = Column(Integer, ForeignKey('client.id'))
-    client = relationship('Client', back_populates='orders', cascade="all, delete-orphan", single_parent=True)
-
-    __mapper_args__ = {
-        'confirm_deleted_rows': False,
-    }
-
-    def __repr__(self):
-        return "<{}(id={}, code={}, client_id={})>" \
-            .format(self.__class__.__name__, self.id, self.code, self.client_id)
 
 
 BaseModel.metadata.create_all(app.engine)

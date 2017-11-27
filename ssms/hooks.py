@@ -21,6 +21,11 @@ def require_admin(req, resp, resource, params):
         raise falcon.HTTPError(falcon.HTTP_403)
 
 
+def require_client(req, resp, resource, params):
+    if req.user.user_type != UsersEnum.client:
+        raise falcon.HTTPError(falcon.HTTP_403)
+
+
 def require_user(req, resp, resource, params):
     if not req.user:
         raise falcon.HTTPError(falcon.HTTP_403)

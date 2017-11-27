@@ -1,18 +1,40 @@
 from marshmallow import Schema as BaseSchema, fields, post_load, post_dump
+from marshmallow_enum import EnumField
+
+from sqlalchemy import inspect
+
+from ssms.models.enums import UsersEnum
 
 
 class Schema(BaseSchema):
     created = fields.DateTime(dump_only=True, allow_none=True, format='iso')
     updated = fields.DateTime(dump_only=True, allow_none=True, format='iso')
 
+    def load(self, data, instance=None, **kwargs):
+        result, errors = super(Schema, self).load(data, **kwargs)
+
+        if errors:
+            return None, errors
+
+        if instance:
+            mapper = inspect(instance)
+            for field in mapper.attrs:
+                updated_value = getattr(result, field.key, None)
+                if updated_value:
+                    setattr(instance, field.key, updated_value)
+
+            return instance, errors
+
+        return result, errors
+
 
 class UserSchema(Schema):
-    id = fields.Integer(allow_none=True)
+    id = fields.Integer(allow_none=True, dump_only=True)
     email = fields.Email(required=True)
     password = fields.String(required=True)
     seed = fields.String(allow_none=True)
     first_name = fields.String(required=True)
-    user_type = fields.String(allow_none=True)
+    user_type = EnumField(UsersEnum, by_value=True, allow_none=True)
     last_name = fields.String(required=True)
     code = fields.String(dump_only=True, allow_none=True)
 
@@ -44,7 +66,7 @@ class ClientSchema(UserSchema):
 
 
 class IngredientSchema(Schema):
-    id = fields.Integer(allow_none=True)
+    id = fields.Integer(allow_none=True, dump_only=True)
     name = fields.String(required=True)
     unit = fields.String(required=True)
     code = fields.String(dump_only=True, allow_none=True)
@@ -68,7 +90,7 @@ class ProductIngredientSchema(Schema):
 
 
 class ProductSchema(Schema):
-    id = fields.Integer(allow_none=True)
+    id = fields.Integer(allow_none=True, dump_only=True)
     name = fields.String(required=True)
     value = fields.Float(required=True)
     discount = fields.Float()
@@ -94,7 +116,7 @@ class OrderProductSchema(Schema):
 
 
 class OrderSchema(Schema):
-    id = fields.Integer(allow_none=True)
+    id = fields.Integer(allow_none=True, dump_only=True)
     client_id = fields.Integer()
     client = fields.Nested(ClientSchema, dump_only=True, allow_none=True)
     products = fields.Nested(OrderProductSchema, default=[], many=True)

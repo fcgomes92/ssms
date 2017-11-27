@@ -79,6 +79,7 @@ class AdminListResource(object):
 
 
 @falcon.before(hooks.require_auth)
+@falcon.before(hooks.require_admin)
 class ClientListResource(object):
     schema = Client.schema
 
@@ -124,6 +125,7 @@ class ClientListResource(object):
 
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.get_client)
+@falcon.before(hooks.require_admin)
 class ClientDetailResource(object):
     schema = Client.schema
 
@@ -147,11 +149,7 @@ class ClientDetailResource(object):
 
         schema = self.schema()
 
-        client, errors = schema.dump(client)
-
-        client.update(data)
-
-        client, errors = schema.load(client)
+        client, errors = schema.load(data, instance=client, partial=True)
 
         if errors:
             errors = [

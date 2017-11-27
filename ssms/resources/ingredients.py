@@ -76,12 +76,10 @@ class IngredientDetailResource(object):
 
     def on_put(self, req, resp, ingredient, *args, **kwargs):
         schema = self.schema()
+
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        ingredient, errors = schema.dump(ingredient)
-        ingredient.update(data)
-
-        ingredient, errors = schema.load(ingredient)
+        ingredient, errors = schema.load(data, partial=True, instance=ingredient)
 
         if errors:
             errors = [
