@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 
-engine = create_engine('sqlite:////home/gomes/dev/workspaces/ovelhanegraveg.com/ssms/tests/database.sqlite', echo=False)
+engine = create_engine('sqlite:///:memory:', echo=False)
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import subqueryload, aliased
@@ -90,112 +90,111 @@ Session = sessionmaker(bind=engine)
 
 session = Session()
 
-# u = User(name='Fernando', email='fcgomes.92@gmail.com', password='qwe123')
-#
-# session.add(u)
-#
-# session.commit()
+u = User(name='Fernando', email='fcgomes.92@gmail.com', password='qwe123')
 
-# mock_ingredient_data = [
-#     {
-#         "name": "Fernamento",
-#         "unit": "g",
-#     },
-#     {
-#         "name": "Farinha de Rosca",
-#         "unit": "g",
-#     },
-#     {
-#         "name": "Farinha branca",
-#         "unit": "g",
-#     }
-# ]
-#
-# for im in mock_ingredient_data:
-#     i = Ingredient(**im)
-#     session.add(i)
-#
-# session.commit()
-#
-# ingredients_query = session.query(Ingredient).all()
-# ingredients = []
-# for i in ingredients_query:
-#     ingredients.append(i)
-#
-# mock_product_data = [
-#     {
-#         "name": "Bolo 1",
-#         "value": 10.0,
-#         "discount": 0.0,
-#         "ingredients": [
-#             ProductIngredient(**dict(amount=100, ingredient=ingredients[0])),
-#             ProductIngredient(**dict(amount=100, ingredient=ingredients[1])),
-#         ]
-#     },
-#     {
-#         "name": "Bolo 2",
-#         "value": 20.0,
-#         "discount": 0.0,
-#         "ingredients": [
-#             ProductIngredient(**dict(amount=100, ingredient_id=ingredients[1].id)),
-#             ProductIngredient(**dict(amount=100, ingredient_id=ingredients[2].id)),
-#         ]
-#     },
-# ]
-#
-# for pm in mock_product_data:
-#     p = Product(**pm)
-#     session.add(p)
-#
-# session.commit()
+session.add(u)
 
-# mock_orders_data = [
-#     {
-#         "ref": "ORD001",
-#         "products": [
-#             OrderProduct(**dict(product_id=1, amount=2))
-#             OrderProduct(**dict(product_id=2, amount=2))
-#         ]
-#     },
-#     {
-#         "ref": "ORD002",
-#         "products": [
-#             OrderProduct(**dict(product_id=2, amount=10))
-#         ]
-#     },
-# ]
+session.commit()
 
-# for om in mock_orders_data:
-#     o = Order(**om)
-#     session.add(o)
-#
-# session.commit()
+mock_ingredient_data = [
+    {
+        "name": "Fernamento",
+        "unit": "g",
+    },
+    {
+        "name": "Farinha de Rosca",
+        "unit": "g",
+    },
+    {
+        "name": "Farinha branca",
+        "unit": "g",
+    }
+]
+
+for im in mock_ingredient_data:
+    i = Ingredient(**im)
+    session.add(i)
+
+session.commit()
+
+ingredients_query = session.query(Ingredient).all()
+ingredients = []
+for i in ingredients_query:
+    ingredients.append(i)
+
+mock_product_data = [
+    {
+        "name": "Bolo 1",
+        "value": 10.0,
+        "discount": 0.0,
+        "ingredients": [
+            ProductIngredient(**dict(amount=100, ingredient=ingredients[0])),
+            ProductIngredient(**dict(amount=100, ingredient=ingredients[1])),
+        ]
+    },
+    {
+        "name": "Bolo 2",
+        "value": 20.0,
+        "discount": 0.0,
+        "ingredients": [
+            ProductIngredient(**dict(amount=100, ingredient_id=ingredients[1].id)),
+            ProductIngredient(**dict(amount=100, ingredient_id=ingredients[2].id)),
+        ]
+    },
+]
+
+for pm in mock_product_data:
+    p = Product(**pm)
+    session.add(p)
+
+session.commit()
+
+mock_orders_data = [
+    {
+        "ref": "ORD001",
+        "products": [
+            OrderProduct(**dict(product_id=1, amount=2)),
+            OrderProduct(**dict(product_id=2, amount=2)),
+        ]
+    },
+    {
+        "ref": "ORD002",
+        "products": [
+            OrderProduct(**dict(product_id=2, amount=2))
+        ]
+    },
+]
+
+for om in mock_orders_data:
+    o = Order(**om)
+    session.add(o)
+
+session.commit()
 
 pts = session.query(Product).options(subqueryload(Product.ingredients)).filter(Product.id == 1)
 
+# query for product ingredient report
 # qry = session.query(Ingredient, func.sum(ProductIngredient.amount).label('total')) \
 #     .select_from(ProductIngredient).join(Ingredient) \
 #     .filter(ProductIngredient.product_id.in_([1, ])) \
 #     .group_by(ProductIngredient.ingredient_id)
 
-stmt = session.query(OrderProduct.product_id, func.sum(OrderProduct.amount).label('total'),
-                     (func.sum(OrderProduct.amount).label('total') * OrderProduct.amount).label('mult')) \
+# query for order ingredient report
+stmt = session.query(Product, func.sum(OrderProduct.amount).label('total')) \
     .select_from(OrderProduct).join(Product) \
     .filter(OrderProduct.order_id.in_([1, 2])) \
-    .group_by(OrderProduct.product_id).subquery()
+    .group_by(Product.id)
 
-qry = session.query(Ingredient, stmt.c.total * func.sum(ProductIngredient.amount).label('total'), stmt.c.total, func.sum(ProductIngredient.amount).label('total')) \
+stmt = stmt.subquery()
+
+qry = session.query(Ingredient, func.sum(stmt.c.total * ProductIngredient.amount).label('total'), stmt.c.total) \
     .select_from(ProductIngredient).join(Ingredient) \
-    .join(stmt, ProductIngredient.product_id == stmt.c.product_id) \
-    .group_by(ProductIngredient.ingredient_id).all()
+    .join(stmt, ProductIngredient.product_id == stmt.c.id) \
+    .group_by(ProductIngredient.ingredient_id)
 
 print("You'll need:")
-for ingredient, total, product_total, amount_total in qry:
-    if total > 1000:
-        total /= 1000
-        unit = 'k{}'.format(ingredient.unit)
-    else:
-        unit = ingredient.unit
+for ingredient, total, ptotal in qry:
+    unit = ingredient.unit
     print("\t* {:.2f} {} of {}".format(total, unit, ingredient.name))
 
     # for p in pts:

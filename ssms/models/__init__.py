@@ -1,6 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base, declared_attr, AbstractConcreteBase
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, subqueryload, aliased
 from sqlalchemy import Column, Integer, String, Sequence, Float, ForeignKey, Enum, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import func
 
 import hashlib
 
@@ -107,6 +109,18 @@ class Product(BaseModel):
         return "<{} (name={}, value={})>" \
             .format(self.__class__.__name__, self.name, self.value)
 
+    @classmethod
+    def report_ingredients(cls, products_ids=list(), subquery=False):
+        query = cls.session.query(Ingredient, func.sum(ProductIngredient.amount).label('total')) \
+            .select_from(ProductIngredient).join(Ingredient) \
+            .filter(ProductIngredient.product_id.in_(products_ids)) \
+            .group_by(ProductIngredient.ingredient_id)
+
+        if subquery:
+            return query.subquery()
+        else:
+            return query.all()
+
 
 class Order(BaseModel):
     schema = OrderSchema
@@ -123,6 +137,32 @@ class Order(BaseModel):
     def __repr__(self):
         return "<{}(id={}, code={}, client_id={})>" \
             .format(self.__class__.__name__, self.id, self.code, self.client_id)
+
+    @classmethod
+    def report_products(cls, orders_ids=list(), subquery=False):
+        query = cls.session.query(Product, func.sum(OrderProduct.amount).label('total')) \
+            .select_from(OrderProduct).join(Product) \
+            .filter(OrderProduct.order_id.in_(orders_ids)) \
+            .group_by(Product.id)
+
+        if subquery:
+            return query.subquery()
+        else:
+            return query.all()
+
+    @classmethod
+    def report_ingredients(cls, orders_ids=list(), subquery=False):
+        stmt = cls.report_products(orders_ids=orders_ids, subquery=True)
+
+        query = cls.session.query(Ingredient, func.sum(stmt.c.total * ProductIngredient.amount), ) \
+            .select_from(ProductIngredient).join(Ingredient) \
+            .join(stmt, ProductIngredient.product_id == stmt.c.id) \
+            .group_by(Ingredient.id)
+
+        if subquery:
+            return query.subquery()
+        else:
+            return query.all()
 
 
 class ProductIngredient(BaseModel):

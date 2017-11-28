@@ -418,133 +418,8 @@ def test_products_detail_resource__on_put(db_session, client, admin):
         assert pi_data.get('ingredient').get('name') == pi.ingredient.name
 
 
-def test_clients_list_resource__on_post(db_session, client, admin):
-    mock_data = util.get_random_user_data()
-
-    response = client.simulate_post(
-        '/v1/clients/',
-        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
-        body=json.dumps(mock_data)
-    )
-
-    data = json.loads(response.content).get('data')
-
-    user_client = User.get_by_id(data.get('id'))
-
-    assert response.status == falcon.HTTP_OK
-    assert data.get('email') == user_client.email
-    assert data.get('first_name') == user_client.first_name
-    assert data.get('last_name') == user_client.last_name
-    assert data.get('user_type') == user_client.user_type.value
-    assert data.get('code') == user_client.code
-    assert data.get('password', None) is None
-    assert data.get('seed', None) is None
-
-
-def test_clients_detail_resource__on_get(db_session, client, admin):
-    mock_data = util.get_random_user_data()
-
-    user_client = Client(**mock_data)
-    user_client.save()
-
-    response = client.simulate_get(
-        '/v1/clients/{client_id}'.format(client_id=user_client.id),
-        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
-    )
-
-    data = json.loads(response.content).get('data')
-
-    user_client = User.get_by_id(data.get('id'))
-
-    assert response.status == falcon.HTTP_OK
-    assert data.get('email') == user_client.email
-    assert data.get('first_name') == user_client.first_name
-    assert data.get('last_name') == user_client.last_name
-    assert data.get('user_type') == user_client.user_type.value
-    assert data.get('code') == user_client.code
-    assert data.get('password', None) is None
-    assert data.get('seed', None) is None
-
-
-def test_clients_detail_resource__on_put(db_session, client, admin):
-    original_mock_data = util.get_random_user_data()
-
-    # saves the object to be updated instance
-    user_client = Client(**original_mock_data)
-    user_client.set_password(original_mock_data.get('password'))
-    user_client.save()
-
-    mock_data = {"first_name": "{} {}".format(original_mock_data.get('first_name'),
-                                              util.provider.personal.name()), }
-
-    response = client.simulate_put(
-        '/v1/clients/{client_id}'.format(client_id=user_client.id),
-        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
-        body=json.dumps(mock_data)
-    )
-
-    data = json.loads(response.content).get('data')
-
-    assert response.status == falcon.HTTP_200
-    assert data.get('first_name') == mock_data.get('first_name')
-    assert data.get('first_name') != original_mock_data.get('first_name')
-    assert response.status == falcon.HTTP_OK
-    assert data.get('email') == user_client.email
-    assert data.get('first_name') == user_client.first_name
-    assert data.get('last_name') == user_client.last_name
-    assert data.get('user_type') == user_client.user_type.value
-    assert data.get('code') == user_client.code
-    assert data.get('password', None) is None
-    assert data.get('seed', None) is None
-
-    mock_data = {"last_name": "{} {}".format(original_mock_data.get('last_name'),
-                                             util.provider.personal.name()), }
-
-    response = client.simulate_put(
-        '/v1/clients/{client_id}'.format(client_id=user_client.id),
-        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
-        body=json.dumps(mock_data)
-    )
-
-    data = json.loads(response.content).get('data')
-
-    assert response.status == falcon.HTTP_200
-    assert data.get('last_name') == mock_data.get('last_name')
-    assert data.get('last_name') != original_mock_data.get('last_name')
-    assert data.get('email') == user_client.email
-    assert data.get('first_name') == user_client.first_name
-    assert data.get('last_name') == user_client.last_name
-    assert data.get('user_type') == user_client.user_type.value
-    assert data.get('code') == user_client.code
-    assert data.get('password', None) is None
-    assert data.get('seed', None) is None
-
-
-def test_clients_detail_resource__on_delete(db_session, client, admin):
-    # creates the object to be updated
-    original_mock_data = util.get_random_user_data()
-
-    # saves the object to be updated instance
-    user_client = Client(**original_mock_data)
-    user_client.set_password(original_mock_data.get('password'))
-    user_client.save()
-
-    user_client_db = Client.get_by_email(user_client.email)
-
-    assert user_client_db is not None
-
-    # creates the request
-    response = client.simulate_delete(
-        '/v1/clients/{client_id}'.format(client_id=user_client.id),
-        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
-    )
-
-    json.loads(response.content).get('data')
-
-    user_client_db = Client.get_by_email(user_client.email)
-
-    assert user_client not in db_session
-    assert user_client_db is None
+def test_products_report_resource__on_get(db_session, client, admin):
+    pass
 
 
 def test_orders_list_resource__on_post(db_session, client, admin):
@@ -697,3 +572,136 @@ def test_orders_detail_resource__on_delete(db_session, client, admin):
     assert len(db_session.query(OrderProduct).filter(Order.id == data.get('id')).all()) == 0
     assert len(Ingredient.get_all()) > 0
     assert order not in db_session
+
+
+def test_orders_report_resource__on_get(db_session, client, admin):
+    pass
+
+
+def test_clients_list_resource__on_post(db_session, client, admin):
+    mock_data = util.get_random_user_data()
+
+    response = client.simulate_post(
+        '/v1/clients/',
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    user_client = User.get_by_id(data.get('id'))
+
+    assert response.status == falcon.HTTP_OK
+    assert data.get('email') == user_client.email
+    assert data.get('first_name') == user_client.first_name
+    assert data.get('last_name') == user_client.last_name
+    assert data.get('user_type') == user_client.user_type.value
+    assert data.get('code') == user_client.code
+    assert data.get('password', None) is None
+    assert data.get('seed', None) is None
+
+
+def test_clients_detail_resource__on_get(db_session, client, admin):
+    mock_data = util.get_random_user_data()
+
+    user_client = Client(**mock_data)
+    user_client.save()
+
+    response = client.simulate_get(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+    )
+
+    data = json.loads(response.content).get('data')
+
+    user_client = User.get_by_id(data.get('id'))
+
+    assert response.status == falcon.HTTP_OK
+    assert data.get('email') == user_client.email
+    assert data.get('first_name') == user_client.first_name
+    assert data.get('last_name') == user_client.last_name
+    assert data.get('user_type') == user_client.user_type.value
+    assert data.get('code') == user_client.code
+    assert data.get('password', None) is None
+    assert data.get('seed', None) is None
+
+
+def test_clients_detail_resource__on_put(db_session, client, admin):
+    original_mock_data = util.get_random_user_data()
+
+    # saves the object to be updated instance
+    user_client = Client(**original_mock_data)
+    user_client.set_password(original_mock_data.get('password'))
+    user_client.save()
+
+    mock_data = {"first_name": "{} {}".format(original_mock_data.get('first_name'),
+                                              util.provider.personal.name()), }
+
+    response = client.simulate_put(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert data.get('first_name') == mock_data.get('first_name')
+    assert data.get('first_name') != original_mock_data.get('first_name')
+    assert response.status == falcon.HTTP_OK
+    assert data.get('email') == user_client.email
+    assert data.get('first_name') == user_client.first_name
+    assert data.get('last_name') == user_client.last_name
+    assert data.get('user_type') == user_client.user_type.value
+    assert data.get('code') == user_client.code
+    assert data.get('password', None) is None
+    assert data.get('seed', None) is None
+
+    mock_data = {"last_name": "{} {}".format(original_mock_data.get('last_name'),
+                                             util.provider.personal.name()), }
+
+    response = client.simulate_put(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+        body=json.dumps(mock_data)
+    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert data.get('last_name') == mock_data.get('last_name')
+    assert data.get('last_name') != original_mock_data.get('last_name')
+    assert data.get('email') == user_client.email
+    assert data.get('first_name') == user_client.first_name
+    assert data.get('last_name') == user_client.last_name
+    assert data.get('user_type') == user_client.user_type.value
+    assert data.get('code') == user_client.code
+    assert data.get('password', None) is None
+    assert data.get('seed', None) is None
+
+
+def test_clients_detail_resource__on_delete(db_session, client, admin):
+    # creates the object to be updated
+    original_mock_data = util.get_random_user_data()
+
+    # saves the object to be updated instance
+    user_client = Client(**original_mock_data)
+    user_client.set_password(original_mock_data.get('password'))
+    user_client.save()
+
+    user_client_db = Client.get_by_email(user_client.email)
+
+    assert user_client_db is not None
+
+    # creates the request
+    response = client.simulate_delete(
+        '/v1/clients/{client_id}'.format(client_id=user_client.id),
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+    )
+
+    json.loads(response.content).get('data')
+
+    user_client_db = Client.get_by_email(user_client.email)
+
+    assert user_client not in db_session
+    assert user_client_db is None
