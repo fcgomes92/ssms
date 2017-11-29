@@ -418,8 +418,44 @@ def test_products_detail_resource__on_put(db_session, client, admin):
         assert pi_data.get('ingredient').get('name') == pi.ingredient.name
 
 
-def test_products_report_resource__on_get(db_session, client, admin):
-    pass
+def test_products_ingredients_report_resource__on_get(db_session, client, admin):
+    # create some products, ingredients and orders
+    for idx in range(8):
+        util.create_random_ingredient()
+
+    products = [util.create_random_product(3) for idx in range(8)]
+    products_ids = list(product.id for product in products)
+
+    # creates the request
+    response = client.simulate_get(
+        '/v1/products/reports/ingredients',
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+        body=json.dumps(products_ids),
+    )
+
+    test_report = {}
+
+    for product in products:
+        for pi in product.ingredients:
+            if test_report.get(pi.ingredient_id, None):
+                test_report[pi.ingredient_id]['total'] += pi.amount
+            else:
+                test_report[pi.ingredient_id] = dict(
+                    total=pi.amount,
+                    ingredient=pi.ingredient
+                )
+
+    assert response.status == falcon.HTTP_200
+
+    data = json.loads(response.content).get('data')
+
+    assert isinstance(data, list)
+
+    for report_data in data:
+        test_data = test_report[report_data.get('ingredient_id')]
+        assert test_data.get('total') == report_data.get('total')
+        assert test_data.get('ingredient').name == report_data.get('ingredient').get('name')
+        assert test_data.get('ingredient').unit == report_data.get('ingredient').get('unit')
 
 
 def test_orders_list_resource__on_post(db_session, client, admin):
@@ -542,7 +578,6 @@ def test_orders_detail_resource__on_put(db_session, client, admin):
 
     data = json.loads(response.content).get('data')
 
-    # assert that only the unit changed
     assert response.status == falcon.HTTP_200
     assert len(data.get('products')) == len(mock_data.get('products'))
     assert data.get('products')[0].get('amount') == 10
@@ -561,7 +596,7 @@ def test_orders_detail_resource__on_delete(db_session, client, admin):
 
     # creates the request
     response = client.simulate_delete(
-        '/v1/orders/{client_id}'.format(client_id=order.id),
+        '/v1/orders/{order_id}'.format(order_id=order.id),
         headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
     )
 
@@ -574,8 +609,87 @@ def test_orders_detail_resource__on_delete(db_session, client, admin):
     assert order not in db_session
 
 
-def test_orders_report_resource__on_get(db_session, client, admin):
-    pass
+def test_orders_products_report_resource__on_get(db_session, client, admin):
+    # create some products, ingredients and orders
+    for idx in range(2):
+        util.create_random_product(amount_of_ingredients=2)
+
+    orders = [util.create_random_order(amount_of_products=1) for idx in range(2)]
+
+    orders_ids = list(order.id for order in orders)
+
+    # creates the request
+    response = client.simulate_get(
+        '/v1/orders/reports/products',
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+        body=json.dumps(orders_ids),
+    )
+
+    test_report = {}
+
+    for order in orders:
+        for op in order.products:
+            if test_report.get(op.product_id, None):
+                test_report[op.product_id]['total'] += op.amount
+            else:
+                test_report[op.product_id] = dict(
+                    total=op.amount,
+                    product=op.product
+                )
+
+    assert response.status == falcon.HTTP_200
+
+    data = json.loads(response.content).get('data')
+
+    assert isinstance(data, list)
+
+    for report_data in data:
+        test_data = test_report[report_data.get('product_id')]
+        assert test_data.get('total') == report_data.get('total')
+        assert test_data.get('product').name == report_data.get('product').get('name')
+        assert test_data.get('product').value == report_data.get('product').get('value')
+        assert len(test_data.get('product').ingredients) == len(report_data.get('product').get('ingredients'))
+
+
+def test_orders_ingredients_report_resource__on_get(db_session, client, admin):
+    # create some products, ingredients and orders
+    for idx in range(2):
+        util.create_random_product(amount_of_ingredients=2)
+
+    orders = [util.create_random_order(amount_of_products=1) for idx in range(2)]
+
+    orders_ids = list(order.id for order in orders)
+
+    # creates the request
+    response = client.simulate_get(
+        '/v1/orders/reports/ingredients',
+        headers={'Authorization': 'Basic {}'.format(admin.basic_password)},
+        body=json.dumps(orders_ids),
+    )
+
+    test_report = {}
+
+    for order in orders:
+        for op in order.products:
+            for pi in op.product.ingredients:
+                if test_report.get(pi.ingredient_id, None):
+                    test_report[pi.ingredient_id]['total'] += pi.amount * op.amount
+                else:
+                    test_report[pi.ingredient_id] = dict(
+                        total=pi.amount * op.amount,
+                        ingredient=pi.ingredient
+                    )
+
+    data = json.loads(response.content).get('data')
+
+    assert response.status == falcon.HTTP_200
+    assert isinstance(data, list)
+
+    for report_data in data:
+        test_data = test_report[report_data.get('ingredient_id')]
+        assert test_data.get('total') == report_data.get('total')
+        assert test_data.get('ingredient').name == report_data.get('ingredient').get('name')
+        assert test_data.get('ingredient').unit == report_data.get('ingredient').get('unit')
 
 
 def test_clients_list_resource__on_post(db_session, client, admin):

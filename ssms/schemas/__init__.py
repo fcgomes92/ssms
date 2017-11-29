@@ -126,3 +126,21 @@ class OrderSchema(Schema):
     def make_order(self, data):
         from ssms.models import Order
         return Order(**data)
+
+
+class OrderProductsReportSchema(BaseSchema):
+    product_id = fields.Integer()
+    product = fields.Nested(ProductSchema)
+    total = fields.Float()
+
+
+class OrderIngredientsReportSchema(BaseSchema):
+    ingredient_id = fields.Integer()
+    ingredient = fields.Nested(IngredientSchema)
+    total = fields.Float()
+
+
+class ProductIngredientsReportSchema(BaseSchema):
+    ingredient_id = fields.Integer()
+    ingredient = fields.Nested(IngredientSchema)
+    total = fields.Float()

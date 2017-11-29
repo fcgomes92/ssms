@@ -34,15 +34,24 @@ def set_routes(api):
     _versions = ['v1', ]
     api.add_route(route_version(_versions[0], '/users'), users.UsersListResource())
     api.add_route(route_version(_versions[0], '/users/auth'), auth.UserAuthenticationResource())
+
     api.add_route(route_version(_versions[0], '/admins'), users.AdminListResource())
+
     api.add_route(route_version(_versions[0], '/clients'), users.ClientListResource())
     api.add_route(route_version(_versions[0], '/clients/{client_id}'), users.ClientDetailResource())
+
     api.add_route(route_version(_versions[0], '/ingredients'), ingredients.IngredientListResource())
     api.add_route(route_version(_versions[0], '/ingredients/{ingredient_id}'), ingredients.IngredientDetailResource())
+
     api.add_route(route_version(_versions[0], '/products'), products.ProductListResource())
     api.add_route(route_version(_versions[0], '/products/{product_id}'), products.ProductDetailResource())
+    api.add_route(route_version(_versions[0], '/products/reports/ingredients'),
+                  products.ProductIngredientsReportResource())
+
     api.add_route(route_version(_versions[0], '/orders'), orders.OrderListResource())
     api.add_route(route_version(_versions[0], '/orders/{order_id}'), orders.OrderDetailResource())
+    api.add_route(route_version(_versions[0], '/orders/reports/products'), orders.OrderProductsReportResource())
+    api.add_route(route_version(_versions[0], '/orders/reports/ingredients'), orders.OrderIngredientsReportResource())
 
 
 def configure_logging():

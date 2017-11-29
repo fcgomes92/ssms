@@ -3,6 +3,7 @@ import falcon
 from ssms import hooks
 from ssms.models import Product, ProductIngredient
 from ssms.util.response import format_errors, format_error, format_response
+from ssms.schemas import ProductIngredientsReportSchema
 
 import json
 
@@ -125,3 +126,30 @@ class ProductDetailResource(object):
         resp.status = falcon.HTTP_200
 
         resp.body = json.dumps(format_response(data), ensure_ascii=False)
+
+
+@falcon.before(hooks.require_auth)
+@falcon.before(hooks.require_admin)
+class ProductIngredientsReportResource(object):
+    schema = ProductIngredientsReportSchema
+
+    def on_get(self, req, resp, *args, **kwargs):
+        schema = self.schema()
+
+        data = json.loads(req.stream.read(req.content_length or 0))
+
+        try:
+            report_data = [
+                dict(
+                    ingredient_id=ingredient.id,
+                    ingredient=ingredient,
+                    total=float(total),
+                ) for ingredient, total in Product.report_ingredients(data)
+            ]
+            report, errors = schema.dump(report_data, many=True)
+        except Exception as e:
+            logger.error(e)
+            resp.status = falcon.HTTP_500
+        else:
+            resp.status = falcon.HTTP_200
+            resp.body = json.dumps(format_response(report), ensure_ascii=False)
