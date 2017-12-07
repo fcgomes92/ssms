@@ -8,3 +8,4 @@ requests==2.18.4
 SQLAlchemy==1.1.14
 pyjwt==1.5.3
 mimesis==0.0.10
+falcon-cors=1.1.7

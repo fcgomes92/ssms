@@ -1,7 +1,8 @@
-from sqlalchemy.ext.declarative import declarative_base, declared_attr, AbstractConcreteBase
-from sqlalchemy.orm import relationship, backref, subqueryload, aliased
+from sqlalchemy.ext.declarative import declared_attr, AbstractConcreteBase
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Column, Integer, String, Sequence, Float, ForeignKey, Enum, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm.mapper import configure_mappers
 from sqlalchemy import func
 
 import hashlib
@@ -22,6 +23,10 @@ class Base(object):
 
     created = Column(DateTime)
     updated = Column(DateTime)
+
+    __table__ = None
+    id = None
+    code = None
 
     def save(self):
         if not getattr(self, 'id', None):
@@ -50,17 +55,17 @@ class Base(object):
         self.session.commit()
 
     @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
+    def __tablename__(self):
+        return self.__name__.lower()
 
     @classmethod
     def get_all(cls):
         return cls.session.query(cls).all()
 
     @classmethod
-    def get_by_id(cls, id):
+    def get_by_id(cls, model_id):
         if cls.id:
-            return cls.session.query(cls).filter(cls.id == id).first()
+            return cls.session.query(cls).filter(cls.id == model_id).first()
         else:
             return None
 
@@ -330,3 +335,5 @@ class Client(User):
 
 
 BaseModel.metadata.create_all(app.engine)
+# maps the abstract user class
+configure_mappers()
