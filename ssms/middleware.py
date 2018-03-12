@@ -32,13 +32,36 @@ class NonBlockingAuthentication(object):
 
         if user:
             hashed_password, seed = User.hash_password(password, user.seed)
-
             if user.password == hashed_password:
                 return user, None
             else:
                 raise falcon.HTTPError(falcon.HTTP_403)
         else:
             raise falcon.HTTPError(falcon.HTTP_404)
+
+    def process_sent_auth(self, _type, _auth_string):
+        # the basic auth to get a token
+        if _type.lower() == 'basic':
+            user, token = self.process_basic(_auth_string.encode())
+            return user, token, 'basic'
+
+        # the token auth to handle all other auths and refresh token ones too
+        if _type.lower() == 'token':
+            user, token = self.process_token(_auth_string.encode())
+            return user, token, 'token'
+
+        raise falcon.HTTPError(falcon.HTTP_401)
+
+    def process_url_auth(self, auth):
+        if not auth:
+            return None, None, None
+
+        try:
+            _type, _auth_string = auth.split('=', 1)
+        except ValueError:
+            raise falcon.HTTPError(falcon.HTTP_401)
+        else:
+            return self.process_sent_auth(_type, _auth_string)
 
     def process_auth(self, auth):
         if not auth:
@@ -50,17 +73,7 @@ class NonBlockingAuthentication(object):
         except ValueError:
             raise falcon.HTTPError(falcon.HTTP_401)
         else:
-            # the basic auth to get a token
-            if _type.lower() == 'basic':
-                user, token = self.process_basic(_auth_string.encode())
-                return user, token, 'basic'
-
-            # the token auth to handle all other auths and refresh token ones too
-            if _type.lower() == 'token':
-                user, token = self.process_token(_auth_string.encode())
-                return user, token, 'token'
-
-            raise falcon.HTTPError(falcon.HTTP_401)
+            return self.process_sent_auth(_type, _auth_string)
 
     def process_request(self, req, resp, *args, **kwargs):
         """Process the request before routing it.
@@ -91,7 +104,10 @@ class NonBlockingAuthentication(object):
                 that will be passed to the resource's responder
                 method as keyword arguments.
         """
-        user, token, auth_type = self.process_auth(req.auth)
+        if req.query_string:
+            user, token, auth_type = self.process_url_auth(req.query_string)
+        else:
+            user, token, auth_type = self.process_auth(req.auth)
         setattr(req, 'user', user)
         setattr(req, 'token', token)
         setattr(req, 'auth_type', auth_type)

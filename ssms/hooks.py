@@ -4,7 +4,7 @@ from ssms.models import UsersEnum, Admin, Client, User, Ingredient, Order, Produ
 
 
 def require_auth(req, resp, resource, params):
-    if not req.auth:
+    if not req.user:
         raise falcon.HTTPError(falcon.HTTP_403)
 
 
