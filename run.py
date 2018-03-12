@@ -1,9 +1,16 @@
 import subprocess
 import os
+import argparse
 
 root = os.path.abspath(os.path.dirname(__file__))
 
-gunicorn_virtual_env = os.path.join(root, '.env/bin/gunicorn')
+parser = argparse.ArgumentParser(description="Config the SSMS Application")
+parser.add_argument('-e', '--env', metavar='env', type=str, help='The env path', default='./env')
+
+args = parser.parse_args()
+env_path = args.env
+
+gunicorn_virtual_env = os.path.join(env_path, 'bin/gunicorn')
 
 
 def main():
