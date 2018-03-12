@@ -116,10 +116,10 @@ class Product(BaseModel):
 
     @classmethod
     def report_ingredients(cls, products_ids=list(), subquery=False):
-        query = cls.session.query(Ingredient, func.sum(ProductIngredient.amount).label('total')) \
-            .select_from(ProductIngredient).join(Ingredient) \
-            .filter(ProductIngredient.product_id.in_(products_ids)) \
-            .group_by(ProductIngredient.ingredient_id)
+        query = cls.session.query(Ingredient, func.sum(ProductIngredient.amount).label('total'))
+        query = query.select_from(ProductIngredient).join(Ingredient)
+        query = query.filter(ProductIngredient.product_id.in_(products_ids))
+        query = query.group_by(ProductIngredient.ingredient_id)
 
         if subquery:
             return query.subquery()
@@ -145,10 +145,10 @@ class Order(BaseModel):
 
     @classmethod
     def report_products(cls, orders_ids=list(), subquery=False):
-        query = cls.session.query(Product, func.sum(OrderProduct.amount).label('total')) \
-            .select_from(OrderProduct).join(Product) \
-            .filter(OrderProduct.order_id.in_(orders_ids)) \
-            .group_by(Product.id)
+        query = cls.session.query(Product, func.sum(OrderProduct.amount).label('total'))
+        query = query.select_from(OrderProduct).join(Product)
+        query = query.filter(OrderProduct.order_id.in_(orders_ids))
+        query = query.group_by(Product.id)
 
         if subquery:
             return query.subquery()
@@ -159,10 +159,10 @@ class Order(BaseModel):
     def report_ingredients(cls, orders_ids=list(), subquery=False):
         stmt = cls.report_products(orders_ids=orders_ids, subquery=True)
 
-        query = cls.session.query(Ingredient, func.sum(stmt.c.total * ProductIngredient.amount), ) \
-            .select_from(ProductIngredient).join(Ingredient) \
-            .join(stmt, ProductIngredient.product_id == stmt.c.id) \
-            .group_by(Ingredient.id)
+        query = cls.session.query(Ingredient, func.sum(stmt.c.total * ProductIngredient.amount), )
+        query = query.select_from(ProductIngredient).join(Ingredient)
+        query = query.join(stmt, ProductIngredient.product_id == stmt.c.id)
+        query = query.group_by(Ingredient.id)
 
         if subquery:
             return query.subquery()
