@@ -1,0 +1,73 @@
+@import "colors";
+
+.shadow-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.shadow-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.shadow-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.shadow-4 {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.shadow-5 {
+  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.full-height-page {
+  min-height: 55em;
+
+  @media (min-height: 40em) {
+    min-height: calc(100vh - 6.4em);
+
+    @media(min-width: 42em) {
+      min-height: 100vh;
+    }
+  }
+}
+
+.divider {
+  width: 75%;
+  border: .1em solid;
+  margin: .8em auto;
+  border-radius: .2em;
+
+  &--brown-500 {
+    border-color: $md-brown-500;
+  }
+
+  &--green-500 {
+    border-color: $md-green-500;
+  }
+
+  &--green-700 {
+    border-color: $md-green-700;
+  }
+}
+
+.social-icon {
+  &:before {
+    display: inline-block;
+    font-family: "Ionicons";
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    text-rendering: auto;
+    padding-right: 0.5em;
+    font-size: 1.6em;
+    vertical-align: middle;
+  }
+}

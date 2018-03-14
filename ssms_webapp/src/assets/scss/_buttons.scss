@@ -1,0 +1,80 @@
+@import "colors";
+
+.flat-button {
+  border: none;
+  background: none;
+  vertical-align: middle;
+  transition: all 150ms ease;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  padding: .8em;
+  cursor: pointer;
+  text-transform: uppercase;
+  border-radius: .2em;
+
+  span {
+    font-size: 1.4em;
+  }
+
+  &--white-text {
+    color: #FFF;
+  }
+
+  &:focus {
+    border: .1em solid #FFF;
+  }
+
+  &:hover {
+    border: none;
+    background: rgba(0, 0, 0, .1);
+  }
+
+  &:active {
+    border: none;
+    background: rgba(0, 0, 0, .2);
+  }
+
+  &--round {
+    min-width: 0;
+    border-radius: 50%;
+    &:active {
+      background: rgba(0, 0, 0, .2);
+    }
+    &:focus {
+      border-radius: 50%;
+    }
+  }
+
+  &--full-width {
+    width: 100%;
+  }
+
+  &--transparent {
+    color: $md-green-500;
+    background: none;
+
+    &:hover {
+      background: lighten($md-green-500, 42);
+    }
+
+    &:active {
+      background: lighten($md-green-500, 31);
+    }
+  }
+
+  &--green-500 {
+    background: $md-green-500;
+    color: #FFF;
+
+    &:hover {
+      background: lighten($md-green-500, 14);
+    }
+
+    &:active {
+      background: lighten($md-green-500, 7);
+    }
+
+  }
+}

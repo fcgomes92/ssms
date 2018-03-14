@@ -1,0 +1,87 @@
+.shadow-1, .card--shadow-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+
+.shadow-2, .card--shadow-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+
+.shadow-3, .card--shadow-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+
+.shadow-4, .card--shadow-4 {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+
+.shadow-5, .card--shadow-5 {
+  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+
+.full-height-page {
+  min-height: 55em; }
+  @media (min-height: 40em) {
+    .full-height-page {
+      min-height: calc(100vh - 6.4em); } }
+  @media (min-height: 40em) and (min-width: 42em) {
+    .full-height-page {
+      min-height: 100vh; } }
+
+.divider {
+  width: 75%;
+  border: .1em solid;
+  margin: .8em auto;
+  border-radius: .2em; }
+  .divider--brown-500 {
+    border-color: #795548; }
+  .divider--green-500 {
+    border-color: #4caf50; }
+  .divider--green-700 {
+    border-color: #388e3c; }
+
+.social-icon:before {
+  display: inline-block;
+  font-family: "Ionicons";
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  text-rendering: auto;
+  padding-right: 0.5em;
+  font-size: 1.6em;
+  vertical-align: middle; }
+
+.card {
+  background: #FFF;
+  min-height: 10em;
+  min-width: 25em;
+  margin: auto;
+  max-height: 100%;
+  max-width: 100%;
+  border-radius: .2em;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; }
+  .card__media {
+    background-size: cover;
+    background-position: center;
+    min-height: 20em;
+    padding: .4em .8em; }
+  .card__content {
+    padding: .4em 1.6em; }
+  .card__title__container {
+    padding: 1.6em 1.6em .4em 1.6em; }
+  .card__title__primary-text__text {
+    font-size: 2.4em;
+    font-weight: 500; }
+  .card__title__secondary-text__text {
+    font-size: 2em;
+    font-weight: 300; }
+  .card__actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: .4em 1.6em 1.6em 1.6em; }
+    .card__actions__action {
+      justify-content: flex-end;
+      margin: .4em .8em 0 .4em; }

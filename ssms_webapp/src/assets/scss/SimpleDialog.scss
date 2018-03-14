@@ -1,0 +1,57 @@
+@import "colors";
+
+$transition-time: 300ms;
+$transition-timing: ease-in;
+
+.simple-dialog {
+  opacity: 0;
+  z-index: -99;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  overflow: auto;
+  background: rgba(#212121, .75);
+  transition: all $transition-time $transition-timing;
+  align-items: center;
+  justify-content: center;
+
+  &__content {
+    transform: translate(0, -200%);
+    z-index: -99;
+    max-height: 100%;
+    margin: .8em;
+    transition: all $transition-time $transition-timing;
+  }
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -99;
+  }
+
+  &.show {
+    opacity: 1;
+    z-index: 100;
+
+    .simple-dialog {
+      &__overlay {
+        z-index: 100;
+      }
+
+      &__content {
+        z-index: 101;
+        opacity: 1;
+        transform: translate(0, 0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+}

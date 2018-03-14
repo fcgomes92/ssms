@@ -1,0 +1,41 @@
+@import "colors";
+
+$color: $md-brown-500;
+
+.flat-input, .flat-text-area, .flat-select {
+  background: none;
+  box-sizing: border-box;
+  width: 100%;
+  margin: .5em 0;
+  padding: .5em;
+  border: 2px dashed transparentize($color, .5);
+  outline: none;
+  font-size: 1.6em;
+  font-weight: 400;
+  transition: all 250ms ease;
+  border-radius: 2px;
+  color: #212121;
+
+  &:focus {
+    box-shadow: none;
+    outline: none;
+    border: 2px dashed $color;
+
+    &::-webkit-input-placeholder {
+      color: transparentize($color, .25);
+    }
+
+  }
+
+  &::-webkit-input-placeholder {
+    color: transparentize($color, .5);
+  }
+
+  &--full-width {
+    width: 100%;
+  }
+
+}
+
+.flat-text-area {
+}

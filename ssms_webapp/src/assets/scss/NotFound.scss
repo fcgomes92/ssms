@@ -1,0 +1,73 @@
+@import "colors";
+
+.not-found {
+  background: $md-green-50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  &__bg {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: .35;
+    max-height: 100%;
+  }
+
+  &__text {
+    z-index: 1;
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    @media(min-width: 48em) {
+      width: 50%;
+    }
+
+    @media(min-width: 120em) {
+      width: 40%;
+    }
+
+    .link {
+      font-size: 1.6em;
+      padding: 1em;
+      line-height: 160%;
+      margin: 1em;
+    }
+
+  }
+
+  &__title {
+    z-index: 1;
+    text-align: center;
+    &__text {
+      font-size: 3.2em;
+      font-weight: 500;
+
+      @media(min-width: 48em) {
+        font-size: 4.8em
+      }
+    }
+  }
+
+  &__subtitle {
+    z-index: 1;
+    text-align: center;
+    &__text {
+      font-size: 1.6em;
+
+      @media(min-width: 48em) {
+        font-size: 3.2em
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+@import "colors";
+
+.link {
+  text-decoration: none;
+  font-weight: 500;
+
+  &--button {
+    border: none;
+    background: none;
+    vertical-align: middle;
+    transition: all 150ms ease;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    padding: .8em;
+    cursor: pointer;
+    text-transform: uppercase;
+
+    span {
+      font-size: 1.4em;
+    }
+
+    &--white-text {
+      color: #FFF;
+    }
+
+    &:focus {
+      border: .1em solid #FFF;
+    }
+
+    &:hover {
+      border: none;
+      background: rgba(0, 0, 0, .1);
+    }
+
+    &:active {
+      border: none;
+      background: rgba(0, 0, 0, .2);
+    }
+    &--green-500 {
+      background: $md-green-500;
+      color: #FFF;
+
+      &:hover {
+        background: lighten($md-green-500, 14);
+      }
+
+      &:active {
+        background: lighten($md-green-500, 7);
+      }
+
+    }
+  }
+
+  &--green-500 {
+    color: $md-green-500;
+    &:hover, &:visited {
+      color: lighten($md-green-500, 7);
+    }
+    &:active {
+      color: darken($md-green-500, 7);
+    }
+  }
+
+  &--brown-500 {
+    color: $md-brown-500;
+    &:hover, &:visited {
+      color: lighten($md-brown-500, 7);
+    }
+    &:active {
+      color: darken($md-brown-500, 7);
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "pousadacaminhodosventos.com",
+  "version": "1.0.3",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm-run-all -p watch-css start-js",
+    "start-js": "react-scripts start",
+    "build": "npm run build-css && react-scripts build",
+    "build-css": "node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/",
+    "watch-css": "npm run build-css && node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/ --watch --recursive",
+    "precache": "sw-precache --config=config/sw-precache-config.js --verbose",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "eject": "react-scripts eject"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:fcgomes92/pousadacaminhodosventos.git"
+  },
+  "author": "@fcgomes92",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fcgomes92/pousadacaminhodosventos/issues"
+  },
+  "dependencies": {
+    "animate.css": "^3.5.2",
+    "classnames": "^2.2.5",
+    "history": "^4.7.2",
+    "i18next": "^10.0.7",
+    "i18next-browser-languagedetector": "^2.1.0",
+    "prop-types": "^15.6.0",
+    "react": "^15.6.2",
+    "react-dom": "^15.6.2",
+    "react-i18next": "^6.1.0",
+    "react-image-gallery": "^0.8.6",
+    "react-router-dom": "^4.2.2",
+    "whatwg-fetch": "^2.0.3"
+  },
+  "devDependencies": {
+    "dotenv": "^4.0.0",
+    "firebase-tools": "^3.15.0",
+    "node-sass-chokidar": "0.0.3",
+    "npm-run-all": "^4.1.2",
+    "react-scripts": "^1.0.17",
+    "sw-precache": "^5.1.0"
+  }
+}

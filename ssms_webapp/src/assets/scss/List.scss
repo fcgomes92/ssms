@@ -1,0 +1,46 @@
+@import "colors";
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list__item {
+  padding: 0 1.6em;
+  cursor: pointer;
+  transition: all ease 300ms;
+  display: flex;
+
+  &__content {
+    min-height: 4.8em;
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+  }
+
+  &__left-icon {
+    margin: .8em 1.6em;
+  }
+
+  &__text {
+    font-size: 1.8em;
+  }
+
+  a, a:visited, a:active, a:focus {
+    flex-basis: 100%;
+    color: $md-black;
+    margin: auto;
+    text-decoration: none;
+    transition: all ease 300ms;
+  }
+
+  &:hover, &:focus, &:active {
+    background: transparentize($md-grey-300, .75);
+
+    a, a:visited, a:active, a:focus {
+      color: $md-green-700;
+    }
+  }
+}

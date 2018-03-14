@@ -1,0 +1,148 @@
+html, body, #root {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 300;
+  font-size: 10px;
+  padding: 0;
+  margin: 0;
+  height: 100%; }
+
+main {
+  height: calc(100% - 6.4em);
+  padding: 6.4em 0 0 0; }
+  @media (min-width: 42em) {
+    main {
+      height: 100%;
+      padding: 0 0 0 25em; } }
+
+.flat-button {
+  border: none;
+  background: none;
+  vertical-align: middle;
+  transition: all 150ms ease;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  padding: .8em;
+  cursor: pointer;
+  text-transform: uppercase;
+  border-radius: .2em; }
+  .flat-button span {
+    font-size: 1.4em; }
+  .flat-button--white-text {
+    color: #FFF; }
+  .flat-button:focus {
+    border: .1em solid #FFF; }
+  .flat-button:hover {
+    border: none;
+    background: rgba(0, 0, 0, 0.1); }
+  .flat-button:active {
+    border: none;
+    background: rgba(0, 0, 0, 0.2); }
+  .flat-button--round {
+    min-width: 0;
+    border-radius: 50%; }
+    .flat-button--round:active {
+      background: rgba(0, 0, 0, 0.2); }
+    .flat-button--round:focus {
+      border-radius: 50%; }
+  .flat-button--full-width {
+    width: 100%; }
+  .flat-button--transparent {
+    color: #4caf50;
+    background: none; }
+    .flat-button--transparent:hover {
+      background: #e0f1e0; }
+    .flat-button--transparent:active {
+      background: #b9e0ba; }
+  .flat-button--green-500 {
+    background: #4caf50;
+    color: #FFF; }
+    .flat-button--green-500:hover {
+      background: #7cc67f; }
+    .flat-button--green-500:active {
+      background: #63bb67; }
+
+img {
+  user-select: none; }
+
+.responsive-width img {
+  max-width: 100%;
+  height: auto; }
+
+.flat-input, .flat-text-area, .flat-select {
+  background: none;
+  box-sizing: border-box;
+  width: 100%;
+  margin: .5em 0;
+  padding: .5em;
+  border: 2px dashed rgba(121, 85, 72, 0.5);
+  outline: none;
+  font-size: 1.6em;
+  font-weight: 400;
+  transition: all 250ms ease;
+  border-radius: 2px;
+  color: #212121; }
+  .flat-input:focus, .flat-text-area:focus, .flat-select:focus {
+    box-shadow: none;
+    outline: none;
+    border: 2px dashed #795548; }
+    .flat-input:focus::-webkit-input-placeholder, .flat-text-area:focus::-webkit-input-placeholder, .flat-select:focus::-webkit-input-placeholder {
+      color: rgba(121, 85, 72, 0.75); }
+  .flat-input::-webkit-input-placeholder, .flat-text-area::-webkit-input-placeholder, .flat-select::-webkit-input-placeholder {
+    color: rgba(121, 85, 72, 0.5); }
+  .flat-input--full-width, .flat-text-area--full-width, .flat-select--full-width {
+    width: 100%; }
+
+.link {
+  text-decoration: none;
+  font-weight: 500; }
+  .link--button {
+    border: none;
+    background: none;
+    vertical-align: middle;
+    transition: all 150ms ease;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    padding: .8em;
+    cursor: pointer;
+    text-transform: uppercase; }
+    .link--button span {
+      font-size: 1.4em; }
+    .link--button--white-text {
+      color: #FFF; }
+    .link--button:focus {
+      border: .1em solid #FFF; }
+    .link--button:hover {
+      border: none;
+      background: rgba(0, 0, 0, 0.1); }
+    .link--button:active {
+      border: none;
+      background: rgba(0, 0, 0, 0.2); }
+    .link--button--green-500 {
+      background: #4caf50;
+      color: #FFF; }
+      .link--button--green-500:hover {
+        background: #7cc67f; }
+      .link--button--green-500:active {
+        background: #63bb67; }
+  .link--green-500 {
+    color: #4caf50; }
+    .link--green-500:hover, .link--green-500:visited {
+      color: #63bb67; }
+    .link--green-500:active {
+      color: #419645; }
+  .link--brown-500 {
+    color: #795548; }
+    .link--brown-500:hover, .link--brown-500:visited {
+      color: #8f6555; }
+    .link--brown-500:active {
+      color: #63453b; }
+
+.icon--2x {
+  font-size: 2em; }
+
+.icon--3x {
+  font-size: 3em; }

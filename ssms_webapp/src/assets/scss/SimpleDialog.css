@@ -1,0 +1,39 @@
+.simple-dialog {
+  opacity: 0;
+  z-index: -99;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  overflow: auto;
+  background: rgba(33, 33, 33, 0.75);
+  transition: all 300ms ease-in;
+  align-items: center;
+  justify-content: center; }
+  .simple-dialog__content {
+    transform: translate(0, -200%);
+    z-index: -99;
+    max-height: 100%;
+    margin: .8em;
+    transition: all 300ms ease-in; }
+  .simple-dialog__overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -99; }
+  .simple-dialog.show {
+    opacity: 1;
+    z-index: 100; }
+    .simple-dialog.show .simple-dialog__overlay {
+      z-index: 100; }
+    .simple-dialog.show .simple-dialog__content {
+      z-index: 101;
+      opacity: 1;
+      transform: translate(0, 0);
+      display: flex;
+      align-items: center;
+      justify-content: center; }
