@@ -25,9 +25,11 @@ class HomeComponent extends Component {
         return (
             <main>
                 <NavbarComponent/>
-                <LoaderComponent accent/>
-                <LoaderComponent primary/>
-                <SectionComponent>
+                <SectionComponent id={`loadings`}>
+                    <LoaderComponent accent/>
+                    <LoaderComponent primary/>
+                </SectionComponent>
+                <SectionComponent id={`cards`}>
                     <CardComponent zIndex={1}>
                         <CardTitleComponent primaryText={"TITLE 1"}/>
                         <CardContentComponent>TESTE</CardContentComponent>
@@ -57,6 +59,9 @@ class HomeComponent extends Component {
                         <CardContentComponent>TESTE</CardContentComponent>
                         <CardActionsComponent/>
                     </CardComponent>
+                </SectionComponent>
+                <SectionComponent>
+
                 </SectionComponent>
             </main>
         )

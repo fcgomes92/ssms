@@ -15,9 +15,14 @@ class SectionComponent extends React.Component {
     };
 
     render() {
-        const {children} = this.props;
+        const {children, id} = this.props;
+
+        const cls = {
+            section: 'full-height-page',
+        };
+
         return (
-            <section ref={this.handleSectionRef} id={"banner"}>
+            <section className={cls.section} ref={this.handleSectionRef} id={id}>
                 {children}
             </section>
         )
