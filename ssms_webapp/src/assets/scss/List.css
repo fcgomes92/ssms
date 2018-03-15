@@ -17,6 +17,7 @@
   .list__item__left-icon {
     margin: .8em 1.6em; }
   .list__item__text {
+    width: 100%;
     font-size: 1.8em; }
   .list__item a, .list__item a:visited, .list__item a:active, .list__item a:focus {
     flex-basis: 100%;

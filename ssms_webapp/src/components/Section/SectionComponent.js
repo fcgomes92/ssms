@@ -1,7 +1,17 @@
 import React from 'react';
 
+import PropTypes from 'prop-types';
+
+import classNames from 'classnames';
+
 class SectionComponent extends React.Component {
-    static propTypes = {};
+    static propTypes = {
+        className: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+    };
+
+    static defaultProps = {
+        classNames: ""
+    };
 
     state = {
         section: null,
@@ -15,10 +25,10 @@ class SectionComponent extends React.Component {
     };
 
     render() {
-        const {children, id} = this.props;
+        const {children, id, className} = this.props;
 
         const cls = {
-            section: 'full-height-page',
+            section: classNames('full-height-page', className),
         };
 
         return (
