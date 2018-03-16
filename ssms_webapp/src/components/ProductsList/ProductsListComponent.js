@@ -99,6 +99,7 @@ export default class ProductsListComponent extends React.Component {
 
         return (
             <SectionComponent>
+                <div>Products</div>
                 {this.renderProductsList()}
                 {this.renderProductForm()}
             </SectionComponent>
