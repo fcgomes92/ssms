@@ -1,12 +1,12 @@
+import json
+from logging import getLogger
+
 import falcon
 
-from ssms.models import Admin, Client, User
-from ssms.util.response import format_response, format_error, format_errors
 from ssms import hooks
-
-import json
-
-from logging import getLogger
+from ssms.models import Admin, Client
+from ssms.schemas import AdminSchema, ClientSchema, UserSchema
+from ssms.util.response import format_error, format_errors, format_response
 
 logger = getLogger(__name__)
 
@@ -14,11 +14,10 @@ logger = getLogger(__name__)
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_user)
 class UsersListResource(object):
-    schema = User.schema
 
     def on_get(self, req, resp, *args, **kwargs):
         user = req.user
-        schema = self.schema()
+        schema = UserSchema()
         schema.context['remove_fields'] = ['seed', 'password']
 
         data, errors = schema.dump(user)
@@ -36,11 +35,10 @@ class UsersListResource(object):
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_admin)
 class AdminListResource(object):
-    schema = Admin.schema
 
     def on_get(self, req, resp):
         admins = Admin.get_all()
-        schema = self.schema()
+        schema = AdminSchema()
         schema.context['remove_fields'] = ['seed', 'password']
         data, errors = schema.dump(admins, many=True)
 
@@ -56,7 +54,7 @@ class AdminListResource(object):
     def on_post(self, req, resp):
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        schema = self.schema()
+        schema = AdminSchema()
 
         admin, errors = schema.load(data)
 
@@ -81,11 +79,9 @@ class AdminListResource(object):
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_admin)
 class ClientListResource(object):
-    schema = Client.schema
-
     def on_get(self, req, resp):
         users = Client.get_all()
-        schema = self.schema()
+        schema = ClientSchema()
         schema.context['remove_fields'] = ['seed', 'password']
         data, errors = schema.dump(users, many=True)
 
@@ -101,7 +97,7 @@ class ClientListResource(object):
     def on_post(self, req, resp):
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        schema = self.schema()
+        schema = ClientSchema()
 
         user, errors = schema.load(data)
 
@@ -127,10 +123,8 @@ class ClientListResource(object):
 @falcon.before(hooks.get_client)
 @falcon.before(hooks.require_admin)
 class ClientDetailResource(object):
-    schema = Client.schema
-
     def on_get(self, req, resp, client, *args, **kwargs):
-        schema = self.schema()
+        schema = ClientSchema()
         schema.context['remove_fields'] = ['seed', 'password']
 
         data, errors = schema.dump(client)
@@ -147,7 +141,7 @@ class ClientDetailResource(object):
     def on_put(self, req, resp, client, *args, **kwargs):
         data = json.loads(req.stream.read(req.content_length or 0))
 
-        schema = self.schema()
+        schema = ClientSchema()
 
         client, errors = schema.load(data, instance=client, partial=True)
 
@@ -168,7 +162,7 @@ class ClientDetailResource(object):
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
     def on_delete(self, req, resp, client, *args, **kwargs):
-        schema = self.schema()
+        schema = ClientSchema()
 
         client.delete()
 

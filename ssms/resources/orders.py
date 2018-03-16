@@ -1,13 +1,12 @@
+import json
+from logging import getLogger
+
 import falcon
 
-from ssms.schemas import OrderIngredientsReportSchema, OrderProductsReportSchema
 from ssms import hooks
-from ssms.models import Order, OrderProduct
-from ssms.util.response import format_errors, format_error, format_response
-
-import json
-
-from logging import getLogger
+from ssms.models import Order
+from ssms.schemas import OrderIngredientsReportSchema, OrderProductSchema, OrderProductsReportSchema, OrderSchema
+from ssms.util.response import format_error, format_errors, format_response
 
 logger = getLogger(__name__)
 
@@ -15,10 +14,8 @@ logger = getLogger(__name__)
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_admin)
 class OrderListResource(object):
-    schema = Order.schema
-
     def on_get(self, req, resp, *args, **kwargs):
-        schema = self.schema()
+        schema = OrderSchema()
         orders = Order.get_all()
 
         data, errors = schema.dump(orders, many=True)
@@ -35,7 +32,7 @@ class OrderListResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_post(self, req, resp, *args, **kwargs):
-        schema = self.schema()
+        schema = OrderSchema()
         data = json.loads(req.stream.read(req.content_length or 0))
 
         data.pop('type', None)
@@ -65,10 +62,8 @@ class OrderListResource(object):
 @falcon.before(hooks.require_admin)
 @falcon.before(hooks.get_order)
 class OrderDetailResource(object):
-    schema = Order.schema
-
     def on_get(self, req, resp, order, *args, **kwargs):
-        schema = self.schema()
+        schema = OrderSchema()
         data, errors = schema.dump(order)
 
         if errors:
@@ -83,7 +78,7 @@ class OrderDetailResource(object):
         resp.body = json.dumps(data, ensure_ascii=False)
 
     def on_put(self, req, resp, order, *args, **kwargs):
-        schema = self.schema()
+        schema = OrderSchema()
 
         data = json.loads(req.stream.read(req.content_length or 0))
 
@@ -92,7 +87,7 @@ class OrderDetailResource(object):
         order, errors = schema.load(data, partial=True, instance=order)
 
         if products:
-            op_schema = OrderProduct.schema()
+            op_schema = OrderProductSchema()
             op, op_errors = op_schema.load(products, many=True, partial=True)
         else:
             op_errors = None
@@ -128,7 +123,7 @@ class OrderDetailResource(object):
             resp.body = json.dumps(format_response(data), ensure_ascii=False)
 
     def on_delete(self, req, resp, order, *args, **kwargs):
-        schema = self.schema()
+        schema = OrderSchema()
 
         order.delete()
 
@@ -144,10 +139,8 @@ class OrderDetailResource(object):
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_admin)
 class OrderProductsReportResource(object):
-    schema = OrderProductsReportSchema
-
     def on_get(self, req, resp, *args, **kwargs):
-        schema = self.schema()
+        schema = OrderProductsReportSchema()
 
         data = json.loads(req.stream.read(req.content_length or 0))
 
@@ -171,10 +164,8 @@ class OrderProductsReportResource(object):
 @falcon.before(hooks.require_auth)
 @falcon.before(hooks.require_admin)
 class OrderIngredientsReportResource(object):
-    schema = OrderIngredientsReportSchema
-
     def on_get(self, req, resp, *args, **kwargs):
-        schema = self.schema()
+        oi_schema = OrderIngredientsReportSchema()
 
         data = json.loads(req.stream.read(req.content_length or 0))
 
@@ -186,7 +177,7 @@ class OrderIngredientsReportResource(object):
                     total=float(total),
                 ) for ingredient, total in Order.report_ingredients(data)
             ]
-            report, errors = schema.dump(report_data, many=True)
+            report, errors = oi_schema.dump(report_data, many=True)
         except Exception as e:
             logger.error(e)
             resp.status = falcon.HTTP_500

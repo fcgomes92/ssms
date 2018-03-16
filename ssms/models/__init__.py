@@ -10,10 +10,6 @@ from sqlalchemy.orm.mapper import configure_mappers
 from ssms import app
 from ssms.database import session
 from ssms.models.enums import UsersEnum
-from ssms.schemas import (
-    AdminSchema, ClientSchema, IngredientSchema, OrderProductSchema, OrderSchema, ProductIngredientSchema,
-    ProductSchema, UserSchema,
-)
 from ssms.util import auth, friendly_code
 
 
@@ -76,8 +72,6 @@ BaseModel = declarative_base(cls=Base)
 
 
 class Ingredient(BaseModel):
-    schema = IngredientSchema
-
     id = Column(Integer, Sequence('ingredient_id_seq'), primary_key=True,
                 autoincrement=True)
     name = Column(String(128))
@@ -94,8 +88,6 @@ class Ingredient(BaseModel):
 
 
 class Product(BaseModel):
-    schema = ProductSchema
-
     id = Column(Integer, Sequence('product_id_seq'), primary_key=True,
                 autoincrement=True)
     name = Column(String)
@@ -127,8 +119,6 @@ class Product(BaseModel):
 
 
 class Order(BaseModel):
-    schema = OrderSchema
-
     id = Column(Integer, Sequence('orders_id_seq'), primary_key=True,
                 autoincrement=True)
     code = Column(String(256), index=True, unique=True)
@@ -173,8 +163,6 @@ class Order(BaseModel):
 
 
 class ProductIngredient(BaseModel):
-    schema = ProductIngredientSchema
-
     product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
     ingredient_id = Column(Integer, ForeignKey('ingredient.id'),
                            primary_key=True)
@@ -221,8 +209,6 @@ class ProductIngredient(BaseModel):
 
 
 class OrderProduct(BaseModel):
-    schema = OrderProductSchema
-
     product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
     order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
     amount = Column(Integer)
@@ -267,8 +253,6 @@ class OrderProduct(BaseModel):
 
 
 class User(AbstractConcreteBase, BaseModel):
-    schema = UserSchema
-
     id = Column(Integer, Sequence('user_id_seq'), primary_key=True,
                 autoincrement=True)
     email = Column(String(128), unique=True)
@@ -312,8 +296,6 @@ class User(AbstractConcreteBase, BaseModel):
 
 
 class Admin(User):
-    schema = AdminSchema
-
     __mapper_args__ = {
         'polymorphic_identity': 'admin',
         'concrete':             True,
@@ -325,8 +307,6 @@ class Admin(User):
 
 
 class Client(User):
-    schema = ClientSchema
-
     orders = relationship('Order',
                           backref=backref('client', lazy="subquery"),
                           cascade="all, delete-orphan",
